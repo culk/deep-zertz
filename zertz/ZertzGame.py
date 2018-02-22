@@ -96,13 +96,6 @@ class ZertzGame():
             return self.players[self.cur_player].n
         return 0
 
-    def _get_rotational_symmetries(self):
-        pass
-
-    def _get_mirrior_symmetries(self):
-        # flip the board and then generate rotational symmetries
-        pass
-
     def get_symmetries(self):
         # TODO: implement this later for training efficiency improvements
         # There are many symmetries in Zertz
@@ -113,5 +106,6 @@ class ZertzGame():
         # it can be shifted in one of the six directions and still be able to fit within the
         # original space.
         # Total board symmetries = 6 * 2 * (# of shift symmetries)
-        pass
+        symmetries = self.board.get_symmetries()
+        return symmetries
 

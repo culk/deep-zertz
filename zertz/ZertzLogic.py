@@ -38,25 +38,30 @@ class Board():
     _HEX_NUMBERS = [(1, 1), (7, 3), (19, 5), (37, 7), (61, 9), (91, 11), (127, 13)]
     _MARBLE_VALUES = {'b': 4, 'g': 3, 'w': 2}
 
-    def __init__(self, rings=37):
-        self.rings = rings
+    def __init__(self, rings=37, clone=None):
+        if clone is not None:
+            self.rings = clone.rings
+            self.board_width = clone.board_width
+            self.board_state = np.copy(clone.board_state)
+        else:
+            self.rings = rings
 
-        # determine width of board
-        self.board_width = 0
-        for total, width in self._HEX_NUMBERS:
-            # limiting to only boards that are perfect hexagons for now
+            # determine width of board
+            self.board_width = 0
+            for total, width in self._HEX_NUMBERS:
+                # limiting to only boards that are perfect hexagons for now
+                # TODO: implement for uneven number of rings
+                if total == self.rings:
+                    self.board_width = width
+            assert self.board_width != 0
+
+            # initialize board as 2d array and fill with rings, only perfect hexagons are implemented for now
             # TODO: implement for uneven number of rings
-            if total == self.rings:
-                self.board_width = width
-        assert self.board_width != 0
-
-        # initialize board as 2d array and fill with rings, only perfect hexagons are implemented for now
-        # TODO: implement for uneven number of rings
-        self.board_state = np.zeros((self.board_width, self.board_width))
-        for i in range(self.board_width):
-            # right now this has origin at top left (like numpy) but my diagram has the origin in bottom left
-            j = np.abs(i - self.board_width // 2)
-            self.board_state[:self.board_width - j, i] = 1
+            self.board_state = np.zeros((self.board_width, self.board_width))
+            for i in range(self.board_width):
+                # right now this has origin at top left (like numpy) but my diagram has the origin in bottom left
+                j = np.abs(i - self.board_width // 2)
+                self.board_state[:self.board_width - j, i] = 1
 
     def _get_middle_ring(self, src, dst):
         x1, y1 = src
@@ -181,4 +186,13 @@ class Board():
         # TODO: can this be improved?
         removable = [index for index in self._get_open_rings() if self._is_removable(index)]
         return removable
+
+    def _get_rotational_symmetries(self):
+        pass
+
+    def _get_mirrior_symmetries(self):
+        pass
+
+    def get_symmetries(self):
+        pass
 
