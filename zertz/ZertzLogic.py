@@ -72,6 +72,9 @@ class Board():
             _, rem_index = action[1]
             self.board_state[put_index] = _MARBLE_VALUES[marble_type]
             self.board_state[rem_index] = 0
+            # TODO: check if removing the ring would separate the board
+            #       capture separated marbles and update the board state
+            # idea: if there are at least three empty spaces bordering the removed space and they are not all next to each other then it separates
         elif action[0][0] == 'CAP':
             # remove marble from its origin
             _, marble_type, src_index = action[0]
@@ -105,20 +108,77 @@ class Board():
                     moves.append((('PUT', marble_type, put), ('REM', rem)))
         return moves
 
+    def _is_adjacent(l1, l2):
+        # TODO: implement
+        # return True if l1 and l2 are adjacent to each other on the hexagonal board
+        pass
+
+    def _get_jump_dest(start, cap):
+        # TODO: implement
+        # return the landing index after capturing the marble at cap from start
+        pass
+
     def _get_capture_moves(self):
         # check each square to see if a capture is possible
+        def build_capture_chain(start, visited, occupied):
+            # TODO: implement
+            # need recursive function to build capture paths that can then be turned into actions
+            # BAD CODE BELOW
+            moves = []
+            for i, index in enumerate(occupied):
+                if index == start: continue
+                if self._is_adjacent(index, start):
+                    marble_type = self.board_state[index]
+                    dest = self._get_jump_dest(start, index)
+                    moves.append([[marble_type, dest], build_capture_chain(dest, visited + [i], occupied)])
+                    # then would need to unravel the moves...
+                    # this is messy and needs to be written better
+            return moves
+            # BAD CODE ABOVE
+
         # TODO: implement
         # how to implement this efficiently? maintain list of marbles currently on the board and iterate over those? or iterate over all spaces
         moves = []
+        occupied_rings = zip(*np.where(self.board_state > 1))
+        for i, index in enumerate(occupied_rings):
+            move = build_capture_chain(index, [i], occupied_rings)
+            # convert move to a tuple and label it 'CAP'
+            moves.append(move)
         return moves
 
     def _get_open_rings(self):
         # return a list of indices to open rings
-        return zip(*np.where(self.board_state == 1))
+        open_rings = zip(*np.where(self.board_state == 1))
+        return open_rings
+
+    def _is_removable(self, index):
+        # check if the ring at index is removable
+        # a ring is removable if two of its neighbors in a row are missing and the ring itself is empty
+        # check if the ring is empty
+        if self.board_state[index] != 1:
+            return False
+        # build a list of the neighboring indices
+        y, x = index
+        directions = [(1, 0), (1, 1), (0, 1), (-1, 0), (0, -1), (1, -1)]
+        neighbors = [(y + dy, x + dx) for dy, dx in directions]
+        # add the first neighbor index to the end so that if the first and last are both empty then it still passes
+        neighbors.append(neighbors[0])
+        # track how many adjacent spaces are empty in a row
+        adjacent_empty = 0
+        for ny, nx in neighbors:
+            if 0 <= ny < self.board_width and 0 <= nx < self.board_width:
+                if self.board_state[ny, nx] != 0:
+                    # if the neighbor index is in bounds and not removed then reset the empty counter
+                    adjacent_empty = 0
+                    continue
+            adjacent_empty += 1
+            if adjacent_empty >= 2:
+                return True
+        return False
 
     def _get_removable_rings(self):
         # return a list of indices to rings that can be removed
-        # TODO: implement
-        # iterate over all open rings? efficient way to check if a ring is removable?
-        pass
+        # TODO: can this be improved?
+        removable = [index for index in self._get_open_rings() if self._is_removable(index)]
+        return removable
 
