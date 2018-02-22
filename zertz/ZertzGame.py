@@ -82,7 +82,6 @@ class ZertzGame():
                     break
             if possible_win:
                 return True
-                    
         # TODO: implement other checks
         # check if the board is in a state where the game cannot progress
         #   (not sure if possible, could be for different sized board states)
@@ -95,10 +94,24 @@ class ZertzGame():
         # if no players have won then return 0
         if self._is_game_over():
             return self.players[self.cur_player].n
-        else:
-            return 0
+        return 0
+
+    def _get_rotational_symmetries(self):
+        pass
+
+    def _get_mirrior_symmetries(self):
+        # flip the board and then generate rotational symmetries
+        pass
 
     def get_symmetries(self):
         # TODO: implement this later for training efficiency improvements
+        # There are many symmetries in Zertz
+        # First, there are rotational symmetry in that every board position can be rotated in
+        # six different ways
+        # Second, there are mirror symmetry with every rotation being able to be flipped
+        # Third, there are translational symmetries once the board has gotten small enough that 
+        # it can be shifted in one of the six directions and still be able to fit within the
+        # original space.
+        # Total board symmetries = 6 * 2 * (# of shift symmetries)
         pass
 
