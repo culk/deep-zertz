@@ -33,14 +33,29 @@ class ZertzGame():
         else:
             self.win_con = win_con
 
+    def _get_marble_state():
+        type_to_i = {'w': 0, 'g': 1, 'b': 2}
+        state = np.zeros(9)
+        for marble_type in self.supply:
+            state[type_to_i[marble_type]] = self.supply[marble_type]
+        for marble_type in self.players[0].captured:
+            state[type_to_i[marble_type] + 3] = self.players[0].captured[marble_type]
+        for marble_type in self.players[1].captured:
+            state[type_to_i[marble_type] + 6] = self.players[1].captured[marble_type]
+        return state
 
     def get_next_state(self, action):
-        # an action consists of a marble placement and a ring to remove or a capture
+        # Input: an action which consists of a marble placement and a ring to remove or a capture
+        # returns the game state which is a tuple of:
+        #   - 2D matrix of size self.board.board_width representing the board state
+        #   - vector of length 9 containing marble counts in the order:
+        #     (supply 'w', supply 'g', supply 'b', player 1 'w', ..., player 2 'b')
+        #   - integer (0 or 1) giving the current player
         self.board.take_action(action, self.players[self.cur_player])
+        board_state = np.copy(self.board.board_state)
+        marble_state = self._get_marble_state()
         self.cur_player = (self.cur_player + 1) % 2
-        # TODO: what should actually be returned?
-        # should to also include the players captured list because that could impact decisions
-        return (self.supply, self.board.board_state, self.cur_player)
+        return (marble_state, board_state, self.cur_player)
 
     def get_valid_actions(self):
         # A move is in the form:
