@@ -1,5 +1,6 @@
 import sys
 sys.path.append('..')
+from collections import deque
 import numpy as np
 
 
@@ -84,24 +85,94 @@ class Board():
         x2, y2 = dst
         return ((x1 + x2) / 2, (y1 + y2) / 2)
 
+    def _get_neighbors(self, index):
+        # return a list of indices that are adjacent to index on the board
+        # the neighboring index may not be within the board space so it must be checked
+        y, x = index
+        neighbors = [(y + dy, x + dx) for dy, dx in self._DIRECTIONS]
+        return neighbors
+
+    def _is_adjacent(self, l1, l2):
+        # return True if l1 and l2 are adjacent to each other on the hexagonal board
+        return l2 in self._get_neighbors(l1)
+
+    def _get_jump_dst(self, start, cap):
+        # return the landing index after capturing the marble at cap from start
+        # the landing index may not be within the board space so it must be checked
+        sy, sx = start
+        cy, cx = cap
+        dy = (cy - sy) * 2
+        dx = (cx - sx) * 2
+        return (sy + dy, sx + dx)
+
+    def _is_inbounds(self, index):
+        y, x = index
+        return 0 <= y < self.board_width and 0 <= x < self.board_width
+
+
+    def _get_regions(self):
+        # Return a list of continuous regions on the board. A region consists of a list of indices.
+        # If any index can be reached from any other index then this will return a list of length 1.
+        regions = []
+        not_visited = set(zip(*np.where(self.board_state >= 1)))
+        while not_visited:
+            # While there are indices that have not been added to a region start a new empty region
+            region = []
+            queue = deque()
+            queue.appendleft(not_visited.pop())
+            # Add all indices to the region that can be reached from the starting index
+            while queue:
+                index = queue.pop()
+                region.append(index)
+                # Add all neighbors to the queue and mark visited to add them to the same region
+                for neighbor in self._get_neighbors(index):
+                    if (neighbor in not_visited
+                            and self._is_inbounds(neighbor)
+                            and self.board_state[neighbor] != 0):
+                        not_visited.remove(neighbor)
+                        queue.appendleft(neighbor)
+            regions.append(region)
+        return regions
+
     def take_action(self, action, player):
-        # modify the game state based on the action
+        # Modify the game state based on the action
         if action[0][0] == 'PUT':
             _, marble_type, put_index = action[0]
             _, rem_index = action[1]
+            # Place the marble on the board and remove it from the supply
             self.board_state[put_index] = self._MARBLE_TO_INT[marble_type]
             self.supply[marble_type] -= 1
-            # TODO: technically it is possible for a placement action to not have any valid 
-            # rings to remove, in that case no rings are removed
-            self.board_state[rem_index] = 0
-            # TODO: check if removing the ring would separate the board
-            #       capture separated marbles and update the board state
-            # Idea: if there are at least three empty spaces bordering the removed space and 
-            # they are not all next to each other then it separates
-            # Still have to find the section that is smaller (less rings) to iterate over 
-            # those indices and capture the marbles
-            # To further complicate this, an isolated section of the board is only removed 
-            # and captured if all of its rings have marbles
+            # Remove the ring from the board
+            if rem_index is not None:
+                self.board_state[rem_index] = 0
+                # Check if it is possbile for the board to have been separated into regions. This is only 
+                # possible if two of the empty neighbors are opposites.
+                opposite_empty = False
+                for neighbor in self._get_neighbors(rem_index)[:3]:
+                    opposite = self._get_jump_dst(neighbor, rem_index)
+                    #import pdb; pdb.set_trace()
+                    if (self._is_inbounds(neighbor) and self._is_inbounds(opposite)
+                            and self.board_state[neighbor] == 0 and self.board_state[opposite] == 0):
+                        opposite_empty = True
+                        break
+                if opposite_empty:
+                    # Get list of regions
+                    regions = self._get_regions()
+                    # If the board has been separated into multiple regions then check if any are captured
+                    if len(regions) > 1:
+                        for region in regions:
+                            captured = True
+                            # A region is captured if every ring in the region is occupied by a marble
+                            for index in region:
+                                if self.board_state[index] == 1:
+                                    captured = False
+                                    break
+                            if captured:
+                                # Remove all rings in the captured region and give the marbles to the player
+                                for index in region:
+                                    captured_type = self._INT_TO_MARBLE[self.board_state[index]]
+                                    player.captured[captured_type] += 1
+                                    self.board_state[index] = 0
         elif action[0][0] == 'CAP':
             # remove marble from its origin
             _, marble_type, src_index = action[0]
@@ -130,27 +201,10 @@ class Board():
                 for rem in removable_rings:
                     if put != rem:
                         moves.append((('PUT', marble_type, put), ('REM', rem)))
+                # if there are no removable rings then you are not required to remove one
+                if not removable_rings:
+                    moves.append((('PUT', marble_type, put), ('REM', None)))
         return moves
-
-    def _get_neighbors(self, index):
-        # return a list of indices that are adjacent to index on the board
-        # the neighboring index may not be within the board space so it must be checked
-        y, x = index
-        neighbors = [(y + dy, x + dx) for dy, dx in self._DIRECTIONS]
-        return neighbors
-
-    def _is_adjacent(self, l1, l2):
-        # return True if l1 and l2 are adjacent to each other on the hexagonal board
-        return l2 in self._get_neighbors(l1)
-
-    def _get_jump_dst(self, start, cap):
-        # return the landing index after capturing the marble at cap from start
-        # the landing index may not be within the board space so it must be checked
-        sy, sx = start
-        cy, cx = cap
-        dy = (cy - sy) * 2
-        dx = (cx - sx) * 2
-        return (sy + dy, sx + dx)
 
     def _get_capture_moves(self):
         # return a list of all possible capture moves in the form of tuples
@@ -162,10 +216,7 @@ class Board():
                 if i not in visited and self._is_adjacent(start, index):
                     # if index is not visited and adjacent then get the landing index after the capture
                     dst = self._get_jump_dst(start, index)
-                    y, x = dst
-                    if (0 <= y < self.board_width
-                            and 0 <= x < self.board_width
-                            and self.board_state[dst] == 1):
+                    if self._is_inbounds(dst) and self.board_state[dst] == 1:
                         # if the landing index is in bounds and on an empty ring
                         marble_type = self._INT_TO_MARBLE[self.board_state[index]]
                         captured = [(marble_type, dst)]
@@ -204,10 +255,8 @@ class Board():
         neighbors.append(neighbors[0])
         # track the number of consecutive empty neighboring rings
         adjacent_empty = 0
-        for ny, nx in neighbors:
-            if (0 <= ny < self.board_width
-                    and 0 <= nx < self.board_width
-                    and self.board_state[ny, nx] != 0):
+        for neighbor in neighbors:
+            if self._is_inbounds(neighbor) and self.board_state[neighbor] != 0:
                 # if the neighbor index is in bounds and not removed then reset the empty counter
                 adjacent_empty = 0
             else:
