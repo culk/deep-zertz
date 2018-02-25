@@ -27,17 +27,18 @@ class Board():
     #     - this puts a marble at E6 and removes the ring A2
     #
     # Capture action is a tuple in the form:
-    #   ((capture, marble_type, start_ring), (marble_type, dest_ring), (marble_type, dest_ring), etc.)
+    #   ((capture, marble_type, start_ring), (marble_type, dst_ring), (marble_type, dst_ring), etc.)
     #   - here, each marble after the first is a marble being captured
-    #   - the final location of the marble doing the capturing is the final dest_ring
-    #   - the marble being captured is the one on the ring between the start_ring and dest_ring
+    #   - the final location of the marble doing the capturing is the final dst_ring
+    #   - the marble being captured is the one on the ring between the start_ring and dst_ring
     #   i.e. (('CAP', 'b', 'A3'), ('b', 'C5'))
     #        or (('CAP', 'g', 'D6'), ('w', 'D4'), ('w', 'B2'))
     #     - this action uses the marble at D6 to capture the marbles at D5 and C3 before ending at B2
     _ACTION_VERBS = ['PUT', 'REM', 'CAP']
     # for mapping number of rings to board width
     _HEX_NUMBERS = [(1, 1), (7, 3), (19, 5), (37, 7), (61, 9), (91, 11), (127, 13)]
-    _MARBLE_VALUES = {'b': 4, 'g': 3, 'w': 2}
+    _MARBLE_TO_INT = {'b': 4, 'g': 3, 'w': 2}
+    _INT_TO_MARBLE = dict((v, k) for k, v in _MARBLE_TO_INT.items())
     #              (down), (left ), (u / l ), ( up ), (right), (d /r)
     _DIRECTIONS = [(1, 0), (0, -1), (-1, -1), (-1, 0), (0, 1), (1, 1)]
 
@@ -78,7 +79,7 @@ class Board():
         if action[0][0] == 'PUT':
             _, marble_type, put_index = action[0]
             _, rem_index = action[1]
-            self.board_state[put_index] = _MARBLE_VALUES[marble_type]
+            self.board_state[put_index] = _MARBLE_TO_INT[marble_type]
             # TODO: technically it is possible for a placement action to not have any valid 
             # rings to remove, in that case no rings are removed
             self.board_state[rem_index] = 0
@@ -95,14 +96,14 @@ class Board():
             _, marble_type, src_index = action[0]
             self.board_state[src_index] = 1
             # iterate over the captured marbles
-            for captured_type, dest_index in action[1:]:
+            for captured_type, dst_index in action[1:]:
                 # give the captured marble to the player
                 player.captured[captured_type] += 1
-                captured_index = self._get_middle_ring(src_index, dest_index)
+                captured_index = self._get_middle_ring(src_index, dst_index)
                 # remove the captured marble from the board and move the capturing marble
                 self.board_state[captured_index] = 1
                 src_index = dst_index
-            self.board_state[src_index] = _MARBLE_VALUES[marble_type]
+            self.board_state[src_index] = _MARBLE_TO_INT[marble_type]
 
     def get_legal_moves(self):
         # return a list of legal moves
@@ -134,7 +135,7 @@ class Board():
         # return True if l1 and l2 are adjacent to each other on the hexagonal board
         return l2 in self.get_neighbors(l1)
 
-    def _get_jump_dest(self, start, cap):
+    def _get_jump_dst(self, start, cap):
         # return the landing index after capturing the marble at cap from start
         # the landing index may not be within the board space so it must be checked
         sy, sx = start
@@ -144,31 +145,37 @@ class Board():
         return (sy + dy, sx + dx)
 
     def _get_capture_moves(self):
-        # check each square to see if a capture is possible
-        def build_capture_chain(start, visited, occupied):
-            # TODO: implement
-            # need recursive function to build capture paths that can then be turned into actions
-            # BAD CODE BELOW
+        # return a list of all possible capture moves in the form of tuples
+        def build_capture_chain(start, visited, marbles):
+            # recursively build the capture chain for all capture options
+            # returns a list of lists for all possible capture branches
             moves = []
-            for i, index in enumerate(occupied):
-                if index == start: continue
-                if self._is_adjacent(index, start):
-                    marble_type = self.board_state[index]
-                    dest = self._get_jump_dest(start, index)
-                    moves.append([[marble_type, dest], build_capture_chain(dest, visited + [i], occupied)])
-                    # then would need to unravel the moves...
-                    # this is messy and needs to be written better
-            return moves
-            # BAD CODE ABOVE
+            for i, index in enumerate(marbles):
+                if i not in visited and self._is_adjacent(start, index):
+                    # if index is not visited and adjacent then get the landing index after the capture
+                    dst = self._get_jump_dst(start, index)
+                    y, x = dst
+                    if (0 <= y < self.board_width
+                            and 0 <= x < self.board_width
+                            and self.board_state[dst] == 1):
+                        # if the landing index is in bounds and on an empty ring
+                        marble_type = self._INT_TO_MARBLE[self.board_state[index]]
+                        captured = [(marble_type, dst)]
+                        chains = build_capture_chain(dst, marbles.remove(index))
+                        if chains:
+                            moves += [captured + chain for chain in chains]
+                        else:
+                            moves += captured
 
-        # TODO: implement
-        # how to implement this efficiently? maintain list of marbles currently on the board and iterate over those? or iterate over all spaces
         moves = []
+        # create list of the indices of all marbles
         occupied_rings = zip(*np.where(self.board_state > 1))
         for i, index in enumerate(occupied_rings):
-            move = build_capture_chain(index, [i], occupied_rings)
-            # convert move to a tuple and label it 'CAP'
-            moves.append(move)
+            marble_type = self._INT_TO_MARBLE[self.board_state[index]]
+            beginning = [('CAP', marble_type, index)]
+            chains = build_capture_chain(index, [i], occupied_rings)
+            for chain in chains:
+                moves.append(tuple(beginning + chain))
         return moves
 
     def _get_open_rings(self):
