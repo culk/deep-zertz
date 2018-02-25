@@ -3,18 +3,18 @@ import numpy as np
 
 class Board():
     # The zertz board is a hexagon and looks like this:
-    #   Each location is a ring
-    #   Each ring is adjacent to the rings above, below, left, right, up/left, and up/right
+    #   A 2D array where each location is a ring
+    #   Each ring is adjacent to the rings below, left, above/left, above, right, and down/right
     # 
-    #           D7
-    #        C6 D6 E6
-    #     B5 C5 D5 E5 F5
-    #  A4 B4 C4 D4 E4 F4 G4
-    #  A3 B3 C3 D3 E3 F3 G3
-    #  A2 B2 C2 D2 E2 F2 G2
-    #  A1 B1 C1 D1 E1 F1 G1
+    #  A4 B5 C6 D7
+    #  A3 B4 C5 D6 E6
+    #  A2 B3 C4 D5 E5 F5
+    #  A1 B2 C3 D4 E4 F4 G4
+    #     B1 C2 D3 E3 F3 G3
+    #        C1 D2 E2 F2 G2
+    #           D1 E1 F1 G1
     #
-    # The value of each space corresponds to:
+    # The value of each location corresponds to:
     #   - 0 = no ring
     #   - 1 = ring
     #   - 2 = white marble
@@ -35,8 +35,11 @@ class Board():
     #        or (('CAP', 'g', 'D6'), ('w', 'D4'), ('w', 'B2'))
     #     - this action uses the marble at D6 to capture the marbles at D5 and C3 before ending at B2
     _ACTION_VERBS = ['PUT', 'REM', 'CAP']
+    # for mapping number of rings to board width
     _HEX_NUMBERS = [(1, 1), (7, 3), (19, 5), (37, 7), (61, 9), (91, 11), (127, 13)]
     _MARBLE_VALUES = {'b': 4, 'g': 3, 'w': 2}
+    #              (down), (left ), (u / l ), ( up ), (right), (d /r)
+    _DIRECTIONS = [(1, 0), (0, -1), (-1, -1), (-1, 0), (0, 1), (1, 1)]
 
     def __init__(self, rings=37, clone=None):
         if clone is not None:
@@ -58,17 +61,17 @@ class Board():
             # initialize board as 2d array and fill with rings, only perfect hexagons are implemented for now
             # TODO: implement for uneven number of rings
             self.board_state = np.zeros((self.board_width, self.board_width))
+            middle = self.board_width // 2
             for i in range(self.board_width):
-                # right now this has origin at top left (like numpy) but my diagram has the origin in bottom left
-                j = np.abs(i - self.board_width // 2)
-                self.board_state[:self.board_width - j, i] = 1
+                lb = min(0, i - middle)
+                ub = min(5, middle + i + 1)
+                self.board_state[lb:ub, i] = 1
 
     def _get_middle_ring(self, src, dst):
+        # returns the index of the ring between src and dst
         x1, y1 = src
         x2, y2 = dst
-        diff = (x2 - x1, y2 - y1)
-        dx, dy = diff
-        return (x1 + dx / 2, y1 + dy / 2)
+        return ((x1 + x2) / 2, (y1 + y2) / 2)
 
     def take_action(self, action, player):
         # modify the game state based on the action
@@ -76,10 +79,17 @@ class Board():
             _, marble_type, put_index = action[0]
             _, rem_index = action[1]
             self.board_state[put_index] = _MARBLE_VALUES[marble_type]
+            # TODO: technically it is possible for a placement action to not have any valid 
+            # rings to remove, in that case no rings are removed
             self.board_state[rem_index] = 0
             # TODO: check if removing the ring would separate the board
             #       capture separated marbles and update the board state
-            # idea: if there are at least three empty spaces bordering the removed space and they are not all next to each other then it separates
+            # Idea: if there are at least three empty spaces bordering the removed space and 
+            # they are not all next to each other then it separates
+            # Still have to find the section that is smaller (less rings) to iterate over 
+            # those indices and capture the marbles
+            # To further complicate this, an isolated section of the board is only removed 
+            # and captured if all of its rings have marbles
         elif action[0][0] == 'CAP':
             # remove marble from its origin
             _, marble_type, src_index = action[0]
@@ -113,15 +123,25 @@ class Board():
                     moves.append((('PUT', marble_type, put), ('REM', rem)))
         return moves
 
-    def _is_adjacent(l1, l2):
-        # TODO: implement
-        # return True if l1 and l2 are adjacent to each other on the hexagonal board
-        pass
+    def _get_neighbors(self, index):
+        # return a list of indices that are adjacent to index on the board
+        # the neighboring index may not be within the board space so it must be checked
+        y, x = index
+        neighbors = [(y + dy, x + dx) for dy, dx in self._DIRECTIONS]
+        return neighbors
 
-    def _get_jump_dest(start, cap):
-        # TODO: implement
+    def _is_adjacent(self, l1, l2):
+        # return True if l1 and l2 are adjacent to each other on the hexagonal board
+        return l2 in self.get_neighbors(l1)
+
+    def _get_jump_dest(self, start, cap):
         # return the landing index after capturing the marble at cap from start
-        pass
+        # the landing index may not be within the board space so it must be checked
+        sy, sx = start
+        cy, cx = cap
+        dy = cy - sy * 2
+        dx = cx - sx * 2
+        return (sy + dy, sx + dx)
 
     def _get_capture_moves(self):
         # check each square to see if a capture is possible
@@ -163,27 +183,26 @@ class Board():
         if self.board_state[index] != 1:
             return False
         # build a list of the neighboring indices
-        y, x = index
-        directions = [(1, 0), (1, 1), (0, 1), (-1, 0), (0, -1), (1, -1)]
-        neighbors = [(y + dy, x + dx) for dy, dx in directions]
+        neighbors = self._get_neighbors(index)
         # add the first neighbor index to the end so that if the first and last are both empty then it still passes
         neighbors.append(neighbors[0])
-        # track how many adjacent spaces are empty in a row
+        # track the number of consecutive empty neighboring rings
         adjacent_empty = 0
         for ny, nx in neighbors:
-            if 0 <= ny < self.board_width and 0 <= nx < self.board_width:
-                if self.board_state[ny, nx] != 0:
-                    # if the neighbor index is in bounds and not removed then reset the empty counter
-                    adjacent_empty = 0
-                    continue
-            adjacent_empty += 1
-            if adjacent_empty >= 2:
-                return True
+            if (0 <= ny < self.board_width
+                    and 0 <= nx < self.board_width
+                    and self.board_state[ny, nx] != 0):
+                # if the neighbor index is in bounds and not removed then reset the empty counter
+                adjacent_empty = 0
+            else:
+                adjacent_empty += 1
+                if adjacent_empty >= 2:
+                    return True
         return False
 
     def _get_removable_rings(self):
         # return a list of indices to rings that can be removed
-        # TODO: can this be improved?
+        # TODO: can this be improved? Current running time is O(6*n) where n is number of open rings
         removable = [index for index in self._get_open_rings() if self._is_removable(index)]
         return removable
 
