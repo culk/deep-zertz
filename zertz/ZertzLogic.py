@@ -133,8 +133,6 @@ class Board():
             # recursively build the capture chain for all capture options
             # returns a list of lists for all possible capture branches
             moves = []
-            if not marbles:
-                return moves
             for i, index in enumerate(marbles):
                 if i not in visited and self._is_adjacent(start, index):
                     # if index is not visited and adjacent then get the landing index after the capture
@@ -146,11 +144,11 @@ class Board():
                         # if the landing index is in bounds and on an empty ring
                         marble_type = self._INT_TO_MARBLE[self.board_state[index]]
                         captured = [(marble_type, dst)]
-                        chains = build_capture_chain(dst, visited + [i], marbles.remove(index))
+                        chains = build_capture_chain(dst, visited + [i], marbles)
                         if chains:
                             moves += [captured + chain for chain in chains]
                         else:
-                            moves += captured
+                            moves += [captured]
             return moves
 
         moves = []
@@ -161,7 +159,6 @@ class Board():
             beginning = [('CAP', marble_type, index)]
             chains = build_capture_chain(index, [i], occupied_rings)
             for chain in chains:
-                # TODO: problem with how the tuple is being built right now
                 moves.append(tuple(beginning + chain))
         return moves
 

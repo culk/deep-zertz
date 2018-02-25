@@ -62,8 +62,18 @@ class TestZertzLogic(unittest.TestCase):
         board = Board(19)
         board.take_action((('PUT', 'w', (4, 4)), ('REM', (4, 3))), None)
         board.take_action((('PUT', 'b', (3, 4)), ('REM', (4, 2))), None)
-        print(board.board_state)
-        print(board._get_capture_moves())
+        board.take_action((('PUT', 'g', (2, 3)), ('REM', (1, 3))), None)
+        board.take_action((('PUT', 'b', (1, 1)), ('REM', (3, 1))), None)
+        board.take_action((('PUT', 'b', (2, 1)), ('REM', (0, 2))), None)
+        board.take_action((('PUT', 'w', (3, 3)), ('REM', (0, 0))), None)
+        actions = [(('CAP', 'b', (2, 1)), ('b', (0, 1))),
+                   (('CAP', 'b', (3, 4)), ('g', (1, 2)), ('b', (1, 0)), ('b', (3, 2))),
+                   (('CAP', 'b', (3, 4)), ('w', (3, 2)), ('b', (1, 0)), ('b', (1, 2))),
+                   (('CAP', 'w', (4, 4)), ('w', (2, 2)), ('b', (2, 0))),
+                   (('CAP', 'w', (4, 4)), ('w', (2, 2)), ('g', (2, 4))),
+                   (('CAP', 'w', (4, 4)), ('b', (2, 4)), ('g', (2, 2)), ('b', (2, 0)))]
+        for move in board._get_capture_moves():
+            self.assertTrue(move in actions)
 
 class TestZertzGame(unittest.TestCase):
     def test_init(self):
