@@ -154,8 +154,8 @@ class Board():
                 opposite_empty = False
                 for neighbor in self._get_neighbors(rem_index)[:3]:
                     opposite = self._get_jump_dst(neighbor, rem_index)
-                    if (self._is_inbounds(neighbor) and self._is_inbounds(opposite)
-                            and self.board_state[neighbor] == 0 and self.board_state[opposite] == 0):
+                    if ((not self._is_inbounds(neighbor) or self.board_state[neighbor] == 0)
+                            and (not self._is_inbounds(opposite) or self.board_state[opposite] == 0)):
                         opposite_empty = True
                         break
                 if opposite_empty:
@@ -207,7 +207,7 @@ class Board():
                     if put != rem:
                         moves.append((('PUT', marble_type, put), ('REM', rem)))
                 # If there are no removable rings then you are not required to remove one
-                if not removable_rings:
+                if not removable_rings or (len(removable_rings) == 1 and removable_rings[0] == put):
                     moves.append((('PUT', marble_type, put), ('REM', None)))
         return moves
 
