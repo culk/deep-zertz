@@ -90,6 +90,7 @@ class Board():
             _, marble_type, put_index = action[0]
             _, rem_index = action[1]
             self.board_state[put_index] = self._MARBLE_TO_INT[marble_type]
+            self.supply[marble_type] -= 1
             # TODO: technically it is possible for a placement action to not have any valid 
             # rings to remove, in that case no rings are removed
             self.board_state[rem_index] = 0
