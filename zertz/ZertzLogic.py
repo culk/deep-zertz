@@ -38,7 +38,7 @@ class Board():
     #        or (('CAP', 'g', 'D6'), ('w', 'D4'), ('w', 'B2'))
     #     - this action uses the marble at D6 to capture the marbles at D5 and C3 before ending at B2
     _ACTION_VERBS = ['PUT', 'REM', 'CAP']
-    # for mapping number of rings to board width
+    # For mapping number of rings to board width
     _HEX_NUMBERS = [(1, 1), (7, 3), (19, 5), (37, 7), (61, 9), (91, 11), (127, 13)]
     _MARBLE_TO_INT = {'b': 4, 'g': 3, 'w': 2}
     _INT_TO_MARBLE = dict((v, k) for k, v in _MARBLE_TO_INT.items())
@@ -50,20 +50,20 @@ class Board():
             self.rings = clone.rings
             self.board_width = clone.board_width
             self.board_state = np.copy(clone.board_state)
-            self.marbles = clone.marbles
+            self.supply = clone.supply
         else:
             self.rings = rings
 
-            # determine width of board
+            # Determine width of board from the number of rings
             self.board_width = 0
             for total, width in self._HEX_NUMBERS:
-                # limiting to only boards that are perfect hexagons for now
+                # Currently limited to only boards that are perfect hexagons
                 # TODO: implement for uneven number of rings
                 if total == self.rings:
                     self.board_width = width
             assert self.board_width != 0
 
-            # initialize board as 2d array and fill with rings, only perfect hexagons are implemented for now
+            # Initialize board as 2d array and fill with rings, only perfect hexagons are implemented for now
             # TODO: implement for uneven number of rings
             self.board_state = np.zeros((self.board_width, self.board_width))
             middle = self.board_width // 2
@@ -72,7 +72,7 @@ class Board():
                 ub = min(self.board_width, middle + i + 1)
                 self.board_state[lb:ub, i] = 1
 
-            # the number of marbles that are available in the supply
+            # The number of marbles that are available in the supply
             #   default: 6x white, 8x gray, 10x black
             if marbles is None:
                 self.supply = {'w': 6, 'g': 8, 'b': 10}
@@ -80,25 +80,27 @@ class Board():
                 self.supply = marbles
 
     def _get_middle_ring(self, src, dst):
-        # returns the index of the ring between src and dst
+        # Return the index of the ring between src and dst
         x1, y1 = src
         x2, y2 = dst
         return ((x1 + x2) / 2, (y1 + y2) / 2)
 
     def _get_neighbors(self, index):
-        # return a list of indices that are adjacent to index on the board
-        # the neighboring index may not be within the board space so it must be checked
+        # Return a list of indices that are adjacent to index on the board.
+        # The neighboring index may not be within the board space so it must be checked 
+        # that it is inbounds (see _is_inbounds).
         y, x = index
         neighbors = [(y + dy, x + dx) for dy, dx in self._DIRECTIONS]
         return neighbors
 
     def _is_adjacent(self, l1, l2):
-        # return True if l1 and l2 are adjacent to each other on the hexagonal board
+        # Return True if l1 and l2 are adjacent to each other on the hexagonal board
         return l2 in self._get_neighbors(l1)
 
     def _get_jump_dst(self, start, cap):
-        # return the landing index after capturing the marble at cap from start
-        # the landing index may not be within the board space so it must be checked
+        # Return the landing index after capturing the marble at cap from start.
+        # The landing index may not be within the board space so it must be checked 
+        # that it is inbounds (see _is_inbounds).
         sy, sx = start
         cy, cx = cap
         dy = (cy - sy) * 2
@@ -106,6 +108,7 @@ class Board():
         return (sy + dy, sx + dx)
 
     def _is_inbounds(self, index):
+        # Return True if the index is in bounds for board's width
         y, x = index
         return 0 <= y < self.board_width and 0 <= x < self.board_width
 
@@ -150,7 +153,6 @@ class Board():
                 opposite_empty = False
                 for neighbor in self._get_neighbors(rem_index)[:3]:
                     opposite = self._get_jump_dst(neighbor, rem_index)
-                    #import pdb; pdb.set_trace()
                     if (self._is_inbounds(neighbor) and self._is_inbounds(opposite)
                             and self.board_state[neighbor] == 0 and self.board_state[opposite] == 0):
                         opposite_empty = True
@@ -174,24 +176,26 @@ class Board():
                                     player.captured[captured_type] += 1
                                     self.board_state[index] = 0
         elif action[0][0] == 'CAP':
-            # remove marble from its origin
+            # Remove the marble doing the capturing from its origin ring
             _, marble_type, src_index = action[0]
             self.board_state[src_index] = 1
-            # iterate over the captured marbles
             for captured_type, dst_index in action[1:]:
-                # give the captured marble to the player
+                # Give the captured marble to the player
                 player.captured[captured_type] += 1
                 captured_index = self._get_middle_ring(src_index, dst_index)
-                # remove the captured marble from the board and move the capturing marble
+                # Remove the captured marble from the board and update the capturing marbles location
                 self.board_state[captured_index] = 1
                 src_index = dst_index
+            # Place the capturing marble in its final destination ring
             self.board_state[src_index] = self._MARBLE_TO_INT[marble_type]
 
     def get_valid_moves(self):
+        # Return a list of moves that are valid with the current game state.
+        # The current player has no impact on the list of valid moves.
         moves = self._get_capture_moves()
         if moves:
             return moves
-        # build list of elligible moves
+        # If there are no forced captures then build list of placement moves
         for marble_type in self.supply.keys():
             if self.supply[marble_type] == 0:
                 continue
@@ -201,16 +205,16 @@ class Board():
                 for rem in removable_rings:
                     if put != rem:
                         moves.append((('PUT', marble_type, put), ('REM', rem)))
-                # if there are no removable rings then you are not required to remove one
+                # If there are no removable rings then you are not required to remove one
                 if not removable_rings:
                     moves.append((('PUT', marble_type, put), ('REM', None)))
         return moves
 
     def _get_capture_moves(self):
-        # return a list of all possible capture moves in the form of tuples
+        # Return a list of all possible capture moves in the form of tuples
         def build_capture_chain(start, visited, marbles):
-            # recursively build the capture chain for all capture options
-            # returns a list of lists for all possible capture branches
+            # Recursively build the capture chain for all capture options.
+            # Returns a list of lists for all possible capture branches.
             moves = []
             for i, index in enumerate(marbles):
                 if i not in visited and self._is_adjacent(start, index):
@@ -228,8 +232,8 @@ class Board():
             return moves
 
         moves = []
-        # create list of the indices of all marbles
-        occupied_rings = zip(*np.where(self.board_state > 1))
+        # Create list of the indices of all marbles
+        occupied_rings = zip(*np.where(self.board_state != 0))
         for i, index in enumerate(occupied_rings):
             marble_type = self._INT_TO_MARBLE[self.board_state[index]]
             beginning = [('CAP', marble_type, index)]
@@ -239,25 +243,23 @@ class Board():
         return moves
 
     def _get_open_rings(self):
-        # return a list of indices to open rings
+        # Return a list of indices for all of the open rings
         open_rings = zip(*np.where(self.board_state == 1))
         return open_rings
 
     def _is_removable(self, index):
-        # check if the ring at index is removable
-        # a ring is removable if two of its neighbors in a row are missing and the ring itself is empty
-        # check if the ring is empty
+        # Check if the ring at index is removable. A ring is removable if two of its neighbors 
+        # in a row are missing and the ring itself is empty.
         if self.board_state[index] != 1:
             return False
-        # build a list of the neighboring indices
         neighbors = self._get_neighbors(index)
-        # add the first neighbor index to the end so that if the first and last are both empty then it still passes
+        # Add the first neighbor index to the end so that if the first and last are both empty then it still passes
         neighbors.append(neighbors[0])
-        # track the number of consecutive empty neighboring rings
+        # Track the number of consecutive empty neighboring rings
         adjacent_empty = 0
         for neighbor in neighbors:
             if self._is_inbounds(neighbor) and self.board_state[neighbor] != 0:
-                # if the neighbor index is in bounds and not removed then reset the empty counter
+                # If the neighbor index is in bounds and not removed then reset the empty counter
                 adjacent_empty = 0
             else:
                 adjacent_empty += 1
@@ -266,8 +268,7 @@ class Board():
         return False
 
     def _get_removable_rings(self):
-        # return a list of indices to rings that can be removed
-        # TODO: can this be improved? Current running time is O(6*n) where n is number of open rings
+        # Return a list of indices to rings that can be removed
         removable = [index for index in self._get_open_rings() if self._is_removable(index)]
         return removable
 
@@ -278,5 +279,6 @@ class Board():
         pass
 
     def get_symmetries(self):
+        # Return a list of symmetrical board_states by mirroring and rotating the board
         pass
 
