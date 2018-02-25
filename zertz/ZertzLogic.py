@@ -145,6 +145,7 @@ class Board():
             # Place the marble on the board and remove it from the supply
             self.board_state[put_index] = self._MARBLE_TO_INT[marble_type]
             self.supply[marble_type] -= 1
+
             # Remove the ring from the board
             if rem_index is not None:
                 self.board_state[rem_index] = 0
@@ -233,7 +234,7 @@ class Board():
 
         moves = []
         # Create list of the indices of all marbles
-        occupied_rings = zip(*np.where(self.board_state != 0))
+        occupied_rings = zip(*np.where(self.board_state > 1))
         for i, index in enumerate(occupied_rings):
             marble_type = self._INT_TO_MARBLE[self.board_state[index]]
             beginning = [('CAP', marble_type, index)]
