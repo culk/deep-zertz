@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 import numpy as np
 
 
@@ -64,8 +66,8 @@ class Board():
             self.board_state = np.zeros((self.board_width, self.board_width))
             middle = self.board_width // 2
             for i in range(self.board_width):
-                lb = min(0, i - middle)
-                ub = min(5, middle + i + 1)
+                lb = max(0, i - middle)
+                ub = min(self.board_width, middle + i + 1)
                 self.board_state[lb:ub, i] = 1
 
     def _get_middle_ring(self, src, dst):
@@ -105,25 +107,6 @@ class Board():
                 src_index = dst_index
             self.board_state[src_index] = _MARBLE_TO_INT[marble_type]
 
-    def get_legal_moves(self):
-        # return a list of legal moves
-        # check if there is a compulsory capture
-        moves = self._get_capture_moves()
-        if len(moves) != 0:
-            return moves
-        # build list of elligible moves
-        for marble_type in self.supply.keys():
-            if self.supply[marble_type] == 0:
-                continue
-            open_rings = self._get_open_rings()
-            removable_rings = self._get_removable_rings()
-            for put in open_rings:
-                for rem in removable_rings:
-                    if put == rem:
-                        continue
-                    moves.append((('PUT', marble_type, put), ('REM', rem)))
-        return moves
-
     def _get_neighbors(self, index):
         # return a list of indices that are adjacent to index on the board
         # the neighboring index may not be within the board space so it must be checked
@@ -140,8 +123,8 @@ class Board():
         # the landing index may not be within the board space so it must be checked
         sy, sx = start
         cy, cx = cap
-        dy = cy - sy * 2
-        dx = cx - sx * 2
+        dy = (cy - sy) * 2
+        dx = (cx - sx) * 2
         return (sy + dy, sx + dx)
 
     def _get_capture_moves(self):
@@ -178,7 +161,7 @@ class Board():
                 moves.append(tuple(beginning + chain))
         return moves
 
-    def _get_open_rings(self):
+    def get_open_rings(self):
         # return a list of indices to open rings
         open_rings = zip(*np.where(self.board_state == 1))
         return open_rings
@@ -207,10 +190,10 @@ class Board():
                     return True
         return False
 
-    def _get_removable_rings(self):
+    def get_removable_rings(self):
         # return a list of indices to rings that can be removed
         # TODO: can this be improved? Current running time is O(6*n) where n is number of open rings
-        removable = [index for index in self._get_open_rings() if self._is_removable(index)]
+        removable = [index for index in self.get_open_rings() if self._is_removable(index)]
         return removable
 
     def _get_rotational_symmetries(self):

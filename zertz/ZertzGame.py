@@ -1,3 +1,6 @@
+import sys
+sys.path.append('..')
+
 from .ZertzLogic import Board
 from .ZertzPlayer import Player
 
@@ -65,7 +68,19 @@ class ZertzGame():
         #   -marble type in supply (up to 3)
         #   -open rings for marble placement (up to self.rings)
         #   -edge rings for removal (up to 18 for rings=37)
-        actions = self.board.get_legal_moves()
+        actions = self.board._get_capture_moves()
+        if actions:
+            return actions
+        # build list of elligible moves
+        for marble_type in self.supply.keys():
+            if self.supply[marble_type] == 0:
+                continue
+            open_rings = self.board.get_open_rings()
+            removable_rings = self.get_removable_rings()
+            for put in open_rings:
+                for rem in removable_rings:
+                    if put != rem:
+                        actions.append((('PUT', marble_type, put), ('REM', rem)))
         return actions
 
     def _is_game_over(self):
