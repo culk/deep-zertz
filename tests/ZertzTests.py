@@ -89,6 +89,17 @@ class TestZertzGame(unittest.TestCase):
         game = ZertzGame(37)
         self.assertEqual(len(game.get_valid_actions()), 1944)
 
+    def test_take_actions(self):
+        game = ZertzGame(19)
+        game.get_next_state((('PUT', 'w', (4, 4)), ('REM', (4, 3))))
+        game.get_next_state((('PUT', 'b', (3, 4)), ('REM', (4, 2))))
+        game.get_next_state((('PUT', 'g', (2, 3)), ('REM', (1, 3))))
+        game.get_next_state((('PUT', 'b', (1, 1)), ('REM', (3, 1))))
+        supply, board, player = game.get_next_state((('PUT', 'b', (2, 1)), ('REM', (0, 2))))
+        self.assertTrue(np.all(supply[:3] == [5, 7, 7]))
+        self.assertEqual(np.sum(board), 26)
+        self.assertEqual(player, -1)
+
         
 if __name__ == '__main__':
     unittest.main()
