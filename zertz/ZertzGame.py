@@ -76,7 +76,7 @@ class ZertzGame():
             if self.supply[marble_type] == 0:
                 continue
             open_rings = self.board.get_open_rings()
-            removable_rings = self.get_removable_rings()
+            removable_rings = self.board.get_removable_rings()
             for put in open_rings:
                 for rem in removable_rings:
                     if put != rem:
