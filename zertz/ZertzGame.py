@@ -75,23 +75,26 @@ class ZertzGame():
         return actions
 
     def _is_game_over(self):
-        # return True if ended or False if not ended
-        # check if the player's captured marbles is enough to satisfy a win condition
+        # Return True if ended or False if not ended
+        # Check if any player's captured marbles are enough to satisfy a win condition
         for win_con in self.win_con:
-            possible_win = True
-            for marble_type, required in win_con.items():
-                if player.captured[marble_type] >= required:
-                    # meets condition for this type of marble, keep checking
-                    continue
-                else:
-                    possible_win = False
-                    break
-            if possible_win:
-                return True
+            for player in self.players:
+                possible_win = True
+                for marble_type, required in win_con.items():
+                    if player.captured[marble_type] >= required:
+                        # Meets condition for this type of marble, keep checking
+                        continue
+                    else:
+                        possible_win = False
+                        break
+                if possible_win:
+                    return True
+        # If board has every ring covered with a marble then the last player who played is winner
+        if np.all(self.board.board_state != 1):
+            return True
         # TODO: implement other checks
         # check if the board is in a state where the game cannot progress
         #   (not sure if possible, could be for different sized board states)
-        #   - if board has every ring covered with a marble then the last player who played is winner
         #   - if both players start repeating the same sequence of movies the game is a tie (how to check)
         return False
 
@@ -99,7 +102,8 @@ class ZertzGame():
         # returns 1 if 1st player won and -1 if second player won
         # if no players have won then return 0
         if self._is_game_over():
-            return self.players[self.cur_player].n
+            # The winner is the player that made the previous action
+            return self.players[self.cur_player + 1 % 2].n
         return 0
 
     def get_symmetries(self):
