@@ -71,7 +71,7 @@ class ZertzGame():
         #   -marble type in supply (up to 3)
         #   -open rings for marble placement (up to self.rings)
         #   -edge rings for removal (up to 18 for rings=37)
-        actions = self.board.get_valid_moves()
+        actions = self.board.get_valid_moves(self.players[self.cur_player])
         return actions
 
     def _is_game_over(self):

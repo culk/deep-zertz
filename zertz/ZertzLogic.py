@@ -144,7 +144,11 @@ class Board():
             _, rem_index = action[1]
             # Place the marble on the board and remove it from the supply
             self.board_state[put_index] = self._MARBLE_TO_INT[marble_type]
-            self.supply[marble_type] -= 1
+            # If the supply is empty then the marble is removed from the player instead
+            if self.supply[marble_type]:
+                self.supply[marble_type] -= 1
+            else:
+                player.captured[marble_type] -= 1
 
             # Remove the ring from the board
             if rem_index is not None:
@@ -190,15 +194,22 @@ class Board():
             # Place the capturing marble in its final destination ring
             self.board_state[src_index] = self._MARBLE_TO_INT[marble_type]
 
-    def get_valid_moves(self):
+    def get_valid_moves(self, player):
         # Return a list of moves that are valid with the current game state.
-        # The current player has no impact on the list of valid moves.
+        # Player is required in the case that the marble supply is empty.
         moves = self._get_capture_moves()
         if moves:
             return moves
-        # If there are no forced captures then build list of placement moves
+        # If there are no forced captures then build list of placement moves.
+        # Get list of marble types that can be placed. If supply is empty then
+        # the player must use a captured marble.
+        if any(self.supply.values()):
+            available_marbles = self.supply
+        else:
+            available_marbles = player.captured
+
         for marble_type in self.supply.keys():
-            if self.supply[marble_type] == 0:
+            if available_marbles[marble_type] == 0:
                 continue
             open_rings = self._get_open_rings()
             removable_rings = self._get_removable_rings()
