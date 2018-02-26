@@ -1,16 +1,22 @@
-#---------------------------------------------
-#
+'''
+This script is responsible for generating episodes using random strategy, including using random strategy to play with AI
+'''
 
-from zertz.ZertzLogic import Board
 from zertz.ZertzGame import ZertzGame
-from zertz.ZertzPlayer import Player
 import numpy as np
+import pickle
+
+RESULT_PATH = 'results/random_AI_episode.txt'
 
 class RandomStrategy(ZertzGame):
     def __init__(self):
         ZertzGame.__init__(self)
 
     def get_random_action(self):
+        '''
+        Returns a random valid action
+        :return:
+        '''
         actions = self.get_valid_actions()
         index = np.random.choice(len(actions), size=1)[0]
         random_action = actions[index]
@@ -65,7 +71,19 @@ class RandomStrategy(ZertzGame):
         print 'Game ends! Player %i wins!' %self.cur_player
         return episode
 
+def write_episode(path, episode):
+    '''
+    Writes the generated episode into a txt file
+    :param path:
+    :param episode:
+    :return:
+    '''
+    with open(path, 'wb') as f:
+        pickle.dump(episode, f)
+
 if __name__ == '__main__':
     strategy = RandomStrategy()
     episode = strategy.collect_random_ai_episode()
+    write_episode(RESULT_PATH, episode)
+
 
