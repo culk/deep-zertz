@@ -103,7 +103,7 @@ class ZertzGame():
         # if no players have won then return 0
         if self._is_game_over():
             # The winner is the player that made the previous action
-            return self.players[self.cur_player + 1 % 2].n
+            return self.players[(self.cur_player + 1) % 2].n
         return 0
 
     def get_symmetries(self):

@@ -150,6 +150,19 @@ class TestZertzGame(unittest.TestCase):
         self.assertTrue(board[1, 1] == 4)
         self.assertEqual(player, 1)
 
+    def test_game_end(self):
+        game = ZertzGame(1)
+        self.assertEqual(game.get_game_ended(), 0)
+        action = game.get_valid_actions()[0]
+        game.get_next_state(action)
+        self.assertEqual(game.get_game_ended(), 1)
+        game = ZertzGame(7)
+        self.assertEqual(game.get_game_ended(), 0)
+        game.players[1].captured = {'w': 4, 'b': 0, 'g': 0}
+        game.board.supply['w'] -= 4
+        self.assertEqual(game.get_game_ended(), -1)
+
+
         
 if __name__ == '__main__':
     unittest.main()
