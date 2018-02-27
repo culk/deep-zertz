@@ -67,7 +67,7 @@ class RandomStrategy(ZertzGame):
                 episode.append((state, action, player))
                 state = self.get_next_state(action)
 
-        winner = self.cur_player
+        winner = 0 if self.get_game_ended() == 1 else 1
         print 'Game ends! Player %i wins!' %self.cur_player
         return episode
 
