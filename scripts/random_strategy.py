@@ -54,14 +54,14 @@ class RandomStrategy(ZertzGame):
             print '-----------------------'
             print 'Current player is player %i' %player
 
-            if player == 1:
+            if player == 0:
                 action = self.get_random_action()
                 print 'Random player action: ', action
                 episode.append((state, action, player))
                 state = self.get_next_state(action)
 
             else:
-                assert player == 0
+                assert player == 1
                 action = raw_input('Please enter AI action: ')
                 print 'AI action ', action
                 episode.append((state, action, player))
