@@ -70,7 +70,7 @@ class MCTS(object):
         self.root = Node(None, 1.0)
 
     # should be able to get rid of player argument if we have canonical board
-    def simulate(self, board, player):
+    def simulate(self, state):
         """
         Perform one simulation of MCTS. Recursively called until a leaf is found.
         Then uses policy_fn to make prediction of (p,v). This value is propogated up the 
@@ -84,19 +84,18 @@ class MCTS(object):
             if node.is_leaf():
                 break
             action = node.get_action(self.c_puct)
-            board.take_action(action, __)
-            player = -1*player
+            state = self.game.get_next_state(self, action, state)
 
-        # TODO: in game.py, we should implement a function that can spit out game state at specified board and player
-        state = self.game.get_current_state(board)
-        p, v = self._policy(state)
+        p, v = self.policy_fn(state)
 
-        # TODO: similarly, we should be able to query if any board state is ended
-        end, winner = self.game.is_end(board)
-        if not end:
+        winner = self.game.get_game_ended(state)
+        if winner == 0:
+            # No player has won
+            # TODO: need to filter out invalid moves before expand and renormalized
+            valids = self.game.get_valid_actions(state)
             node.expand(p)
         else:
-            if player == winer:
+            if state[2] == winner:
                 v = 1
             else:
                 v = -1
@@ -104,11 +103,11 @@ class MCTS(object):
         node.recurse_update(-v)
 
 
-    def get_action_prob(self, board, player, temp):
+    def get_action_prob(self, state, temp):
 
         for _ in range(self.num_sim):
-            board_copy = np.deep_copy(board)
-            simulate(board, player)
+            state_copy = np.deep_copy(state)
+            simulate(state_copy)
 
         Nas = [(action, node.N) for action, node in self.root.child.items()]
         actions, count = zip(*Nas)

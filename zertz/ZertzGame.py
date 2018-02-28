@@ -10,25 +10,45 @@ from .ZertzPlayer import Player
 # Class interface inspired by https://github.com/suragnair/alpha-zero-general
 
 class ZertzGame():
-    def __init__(self, rings=37, marbles=None, win_con=None):
-        # the size of the game board
-        #   default: 37 rings (approximately 7x7 hex)
-        self.initial_rings = rings
-        self.board = Board(self.initial_rings, marbles)
-        self.players = [Player(self, i) for i in [1, -1]]
-        self.cur_player = 0
+    def __init__(self, rings=37, marbles=None, win_con=None, clone=None, clone_state=None):
+        if clone is not None:
+            # Creates an instance of ZertzGame that is a copy of clone and updated to 
+            # have the same state as clone_state
+            supply, board_state, cur_player = clone_state
+            marble_types = ['w', 'g', 'b']
 
-        # the win conditions (amount of each marble needed)
-        #   default:
-        #     -3 marbles of each color
-        #     -4 white marbles
-        #     -5 gray marbles
-        #     -6 black marbles
-        if win_con is None:
-            self.win_con = [{'w': 3, 'g': 3, 'b': 3},
-                            {'w': 4}, {'g': 5}, {'b': 6}]
+            self.initial_rings = clone.initial_rings
+            self.board = Board(clone=clone.board)
+            self.board.supply = dict(zip(marble_types, supply[:3]))
+            self.board_state = np.copy(board_state)
+
+            self.players = [Player(self, player.n) for player in clone.players]
+            self.player[0].captured = dict(zip(marble_types, supply[3:6]))
+            self.player[1].captured = dict(zip(marble_types, supply[6:]))
+            if cur_player == -1:
+                self.cur_player = 1
+            else:
+                self.cur_player = 0
+            self.win_con = clone.win_con
         else:
-            self.win_con = win_con
+            # the size of the game board
+            #   default: 37 rings (approximately 7x7 hex)
+            self.initial_rings = rings
+            self.board = Board(self.initial_rings, marbles)
+            self.players = [Player(self, i) for i in [1, -1]]
+            self.cur_player = 0
+
+            # the win conditions (amount of each marble needed)
+            #   default:
+            #     -3 marbles of each color
+            #     -4 white marbles
+            #     -5 gray marbles
+            #     -6 black marbles
+            if win_con is None:
+                self.win_con = [{'w': 3, 'g': 3, 'b': 3},
+                                {'w': 4}, {'g': 5}, {'b': 6}]
+            else:
+                self.win_con = win_con
 
     def _get_marble_state(self):
         type_to_i = {'w': 0, 'g': 1, 'b': 2}
@@ -42,7 +62,7 @@ class ZertzGame():
         return state
 
     def get_current_state(self):
-        # returns the game state which is a tuple of:
+        # Returns the game state which is a tuple of:
         #   - 2D matrix of size self.board.board_width representing the board state
         #   - vector of length 9 containing marble counts in the order:
         #     (supply 'w', supply 'g', supply 'b', player 1 'w', ..., player 2 'b')
@@ -51,19 +71,28 @@ class ZertzGame():
         marble_state = self._get_marble_state()
         return (marble_state, board_state, self.players[self.cur_player].n)
 
-    def get_next_state(self, action):
-        # Input: an action which consists of a marble placement and a ring to remove or a capture
-        # returns the game state which is a tuple of:
+    def get_next_state(self, action, cur_state=None):
+        # Input:
+        #   - An action which consists of a marble placement and a ring to remove or a capture
+        #   - Optional: An arbitrary state to use instead of the current game state
+        #         in the form: cur_state = (marble_state, board_state, player_value)
+        # Returns the game state which is a tuple of:
         #   - 2D matrix of size self.board.board_width representing the board state
         #   - vector of length 9 containing marble counts in the order:
         #     (supply 'w', supply 'g', supply 'b', player 1 'w', ..., player 2 'b')
         #   - integer (0 or 1) giving the current player
-        self.board.take_action(action, self.players[self.cur_player])
-        self.cur_player = (self.cur_player + 1) % 2
-        #return (marble_state, board_state, self.players[self.cur_player].n)
-        return self.get_current_state()
+        if cur_state is None:
+            # Use the internal game state to determine the next state
+            self.board.take_action(action, self.players[self.cur_player])
+            self.cur_player = (self.cur_player + 1) % 2
+            next_state = self.get_current_state()
+        else:
+            # Return the next state for an arbitrary marble supply, board and player
+            temp_game = ZertzGame(clone=self, clone_state=cur_state)
+            next_state = temp_game.get_next_state(action)
+        return next_state
 
-    def get_valid_actions(self):
+    def get_valid_actions(self, cur_state=None):
         # A move is in the form:
         #   ([Place/Capture], [marble type], [marble placement], [ring removed])
         # Capturing marbles is compulsory, check if a capture is possible and return list of options
@@ -71,7 +100,12 @@ class ZertzGame():
         #   -marble type in supply (up to 3)
         #   -open rings for marble placement (up to self.rings)
         #   -edge rings for removal (up to 18 for rings=37)
-        actions = self.board.get_valid_moves(self.players[self.cur_player])
+        if cur_state is None:
+            actions = self.board.get_valid_moves(self.players[self.cur_player])
+        else:
+            # Return the valid actions for an arbitrary marble supply, board and player
+            temp_game = ZertzGame(clone=self, clone_state=cur_state)
+            actions = temp_game.get_valid_actions()
         return actions
 
     def _is_game_over(self):
@@ -98,13 +132,18 @@ class ZertzGame():
         #   - if both players start repeating the same sequence of movies the game is a tie (how to check)
         return False
 
-    def get_game_ended(self):
-        # returns 1 if 1st player won and -1 if second player won
-        # if no players have won then return 0
-        if self._is_game_over():
-            # The winner is the player that made the previous action
-            return self.players[(self.cur_player + 1) % 2].n
-        return 0
+    def get_game_ended(self, cur_state=None):
+        # Returns 1 if first player won and -1 if second player won.
+        # If no players have won then return 0.
+        if cur_state is None:
+            if self._is_game_over():
+                # The winner is the player that made the previous action
+                return self.players[(self.cur_player + 1) % 2].n
+            return 0
+        else:
+            # Return if game is ended for an arbitrary marble supply, board and player
+            temp_game = ZertzGame(clone=self, clone_state=cur_state)
+            return temp_game.get_game_ended()
 
     def get_symmetries(self):
         # TODO: implement this later for training efficiency improvements
