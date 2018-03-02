@@ -45,14 +45,16 @@ class Board():
     #              (down), (left ), (u / l ), ( up ), (right), (d /r)
     _DIRECTIONS = [(1, 0), (0, -1), (-1, -1), (-1, 0), (0, 1), (1, 1)]
 
-    def __init__(self, rings=37, marbles=None, clone=None):
+    def __init__(self, rings=37, marbles=None, t=1, clone=None):
         if clone is not None:
             self.rings = clone.rings
+            self.t = clone.t
             self.board_width = clone.board_width
             self.board_state = np.copy(clone.board_state)
             self.supply = clone.supply
         else:
             self.rings = rings
+            self.t = t
 
             # Determine width of board from the number of rings
             self.board_width = 0
