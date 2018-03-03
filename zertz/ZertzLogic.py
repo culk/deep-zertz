@@ -1,5 +1,3 @@
-import sys
-sys.path.append('..')
 from collections import deque
 import numpy as np
 
@@ -46,15 +44,21 @@ class Board():
     _DIRECTIONS = [(1, 0), (0, -1), (-1, -1), (-1, 0), (0, 1), (1, 1)]
 
     def __init__(self, rings=37, marbles=None, t=1, clone=None):
+        # TODO: replace the current board state data structure with the matrix that 
+        # will be used as input for the neural network with the following structure:
+        #   - H x W determined by self.board_width with L layers
+        #   Layers:
+        #   - (# of marble types + 1) x (time history) binary to record previous board positions
+        #   - 1 layer binary with a 1 at the index of a marble that needs to be used for capture
+        #   - 9 layers, each same value one for each index in the supply
+        #   - 1 layer of the same value for the current player
         if clone is not None:
             self.rings = clone.rings
-            self.t = clone.t
             self.board_width = clone.board_width
             self.board_state = np.copy(clone.board_state)
             self.supply = clone.supply
         else:
             self.rings = rings
-            self.t = t
 
             # Determine width of board from the number of rings
             self.board_width = 0
@@ -140,6 +144,8 @@ class Board():
         return regions
 
     def take_action(self, action, player):
+        # TODO: modify to take capture actions one jump at a time and not transition control from
+        # the player until the captures are no longer available with the capturing marble
         # Modify the game state based on the action
         if action[0][0] == 'PUT':
             _, marble_type, put_index = action[0]
@@ -197,6 +203,7 @@ class Board():
             self.board_state[src_index] = self._MARBLE_TO_INT[marble_type]
 
     def get_valid_moves(self, player):
+        # TODO: modify to return a matrix that can be used to filter the policy probability distribution
         # Return a list of moves that are valid with the current game state.
         # Player is required in the case that the marble supply is empty.
         moves = self._get_capture_moves()
@@ -225,6 +232,7 @@ class Board():
         return moves
 
     def _get_capture_moves(self):
+        # TODO: modify to return the capture policy filtering matrix
         # Return a list of all possible capture moves in the form of tuples
         def build_capture_chain(start, visited, marbles):
             # Recursively build the capture chain for all capture options.

@@ -1,5 +1,3 @@
-import sys
-sys.path.append('..')
 import numpy as np
 
 from .ZertzLogic import Board
@@ -36,7 +34,7 @@ class ZertzGame():
             #   default: 37 rings (approximately 7x7 hex)
             self.initial_rings = rings
             self.t = t
-            self.board = Board(self.initial_rings, marbles, self.history)
+            self.board = Board(self.initial_rings, marbles, self.t)
             self.players = [Player(self, i) for i in [1, -1]]
             self.cur_player = 0
 
@@ -67,6 +65,7 @@ class ZertzGame():
     def get_current_state(self):
         # TODO: return a h x w x layers matrix, the number of layers is given by:
         #   - (# of marble types + 1) x (time history) binary to record previous board positions
+        #   - 1 layer binary with a 1 at the index of a marble that needs to be used for capture
         #   - 9 layers, each same value one for each index in the supply
         #   - 1 layer of the same value for the current player
         # Returns the game state which is a tuple of:
