@@ -12,14 +12,14 @@ class ZertzGame():
         if clone is not None:
             # Creates an instance of ZertzGame that is a copy of clone and updated to 
             # have the same state as clone_state
-            supply, board_state, cur_player = clone_state
+            supply, state, cur_player = clone_state
             marble_types = ['w', 'g', 'b']
 
             self.initial_rings = clone.initial_rings
             self.t = clone.t
             self.board = Board(clone=clone.board)
             self.board.supply = dict(zip(marble_types, supply[:3]))
-            self.board_state = np.copy(board_state)
+            self.state = np.copy(state)
 
             self.players = [Player(self, player.n) for player in clone.players]
             self.player[0].captured = dict(zip(marble_types, supply[3:6]))
@@ -69,11 +69,11 @@ class ZertzGame():
         #   - 9 layers, each same value one for each index in the supply
         #   - 1 layer of the same value for the current player
         # Returns the game state which is a tuple of:
-        #   - 2D matrix of size self.board.board_width representing the board state
+        #   - 2D matrix of size self.board.width representing the board state
         #   - vector of length 9 containing marble counts in the order:
         #     (supply 'w', supply 'g', supply 'b', player 1 'w', ..., player 2 'b')
         #   - integer (0 or 1) giving the current player
-        board_state = np.copy(self.board.board_state)
+        board_state = np.copy(self.board.state)
         marble_state = self._get_marble_state()
         return (marble_state, board_state, self.players[self.cur_player].n)
 
@@ -81,9 +81,9 @@ class ZertzGame():
         # Input:
         #   - An action which consists of a marble placement and a ring to remove or a capture
         #   - Optional: An arbitrary state to use instead of the current game state
-        #         in the form: cur_state = (marble_state, board_state, player_value)
+        #         in the form: cur_state = (marble_state, state, player_value)
         # Returns the game state which is a tuple of:
-        #   - 2D matrix of size self.board.board_width representing the board state
+        #   - 2D matrix of size self.board.width representing the board state
         #   - vector of length 9 containing marble counts in the order:
         #     (supply 'w', supply 'g', supply 'b', player 1 'w', ..., player 2 'b')
         #   - integer (0 or 1) giving the current player
@@ -135,7 +135,7 @@ class ZertzGame():
                 if possible_win:
                     return True
         # If board has every ring covered with a marble then the last player who played is winner
-        if np.all(self.board.board_state != 1):
+        if np.all(self.board.state != 1):
             return True
         return False
 

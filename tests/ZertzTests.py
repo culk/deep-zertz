@@ -11,9 +11,9 @@ from zertz.ZertzPlayer import Player
 class TestZertzLogic(unittest.TestCase):
     def test_init(self):
         board = Board(37)
-        self.assertEqual(board.board_width, 7)
+        self.assertEqual(board.width, 7)
         self.assertEqual(board.rings, 37)
-        self.assertEqual(np.sum(board.board_state), 37)
+        self.assertEqual(np.sum(board.state), 37)
 
     def test_removable(self):
         board = Board(19)
@@ -53,10 +53,10 @@ class TestZertzLogic(unittest.TestCase):
         board = Board(19)
         board.take_action((('PUT', 'w', (4, 4)), ('REM', (4, 3))), None)
         board.take_action((('PUT', 'b', (3, 4)), ('REM', (4, 2))), None)
-        self.assertEqual(board.board_state[4, 4], 2)
-        self.assertEqual(board.board_state[4, 3], 0)
-        self.assertEqual(board.board_state[3, 4], 4)
-        self.assertEqual(board.board_state[4, 2], 0)
+        self.assertEqual(board.state[4, 4], 2)
+        self.assertEqual(board.state[4, 3], 0)
+        self.assertEqual(board.state[3, 4], 4)
+        self.assertEqual(board.state[4, 2], 0)
         self.assertTrue(board._is_removable((3, 2)))
 
     def test_get_capture_moves(self):
@@ -82,10 +82,10 @@ class TestZertzLogic(unittest.TestCase):
         board.take_action((('PUT', 'b', (0, 2)), ('REM', (2, 0))), None)
         board.take_action((('PUT', 'b', (2, 4)), ('REM', (2, 1))), None)
         board.take_action((('PUT', 'b', (4, 2)), ('REM', (3, 2))), None)
-        self.assertEqual(board.board_state[4, 2], 4)
+        self.assertEqual(board.state[4, 2], 4)
         player = Player(None, 1)
         board.take_action((('PUT', 'b', (2, 2)), ('REM', (4, 3))), player)
-        self.assertEqual(board.board_state[4, 2], 0)
+        self.assertEqual(board.state[4, 2], 0)
         self.assertEqual(player.captured['b'], 1)
 
     def test_separated_board_complex(self):
@@ -96,21 +96,21 @@ class TestZertzLogic(unittest.TestCase):
         board.take_action((('PUT', 'w', (4, 2)), ('REM', (3, 2))), None)
         board.take_action((('PUT', 'b', (2, 2)), ('REM', (4, 4))), None)
         board.take_action((('PUT', 'b', (1, 3)), ('REM', (3, 4))), None)
-        self.assertEqual(board.board_state[4, 2], 2)
+        self.assertEqual(board.state[4, 2], 2)
         player = Player(None, 1)
         board.take_action((('PUT', 'b', (0, 1)), ('REM', (3, 3))), player)
         self.assertEqual(player.captured['w'], 0)
-        self.assertEqual(board.board_state[4, 2], 2)
-        self.assertEqual(board.board_state[4, 3], 1)
+        self.assertEqual(board.state[4, 2], 2)
+        self.assertEqual(board.state[4, 3], 1)
         board.take_action((('PUT', 'w', (4, 3)), ('REM', (1, 0))), player)
-        self.assertEqual(board.board_state[4, 2], 0)
+        self.assertEqual(board.state[4, 2], 0)
         self.assertEqual(player.captured['w'], 2)
 
 class TestZertzGame(unittest.TestCase):
     def test_init(self):
         game = ZertzGame(19)
         self.assertEqual(game.initial_rings, 19)
-        self.assertEqual(np.sum(game.board.board_state), 19)
+        self.assertEqual(np.sum(game.board.state), 19)
         self.assertEqual(len(game.players), 2)
         self.assertEqual(game.cur_player, 0)
 
