@@ -9,6 +9,7 @@ from .ZertzPlayer import Player
 
 class ZertzGame():
     def __init__(self, rings=37, marbles=None, win_con=None, t=1, clone=None, clone_state=None):
+        # TODO: remove player
         if clone is not None:
             # Creates an instance of ZertzGame that is a copy of clone and updated to 
             # have the same state as clone_state
@@ -52,6 +53,8 @@ class ZertzGame():
                 self.win_con = win_con
 
     def _get_marble_state(self):
+        # Obsolete function
+        return None
         type_to_i = {'w': 0, 'g': 1, 'b': 2}
         state = np.zeros(9)
         for marble_type in self.board.supply:
@@ -78,6 +81,7 @@ class ZertzGame():
         return (marble_state, board_state, self.players[self.cur_player].n)
 
     def get_next_state(self, action, cur_state=None):
+        # TODO: remove player
         # Input:
         #   - An action which consists of a marble placement and a ring to remove or a capture
         #   - Optional: An arbitrary state to use instead of the current game state
@@ -99,6 +103,7 @@ class ZertzGame():
         return next_state
 
     def get_valid_actions(self, cur_state=None):
+        # TODO: remove player
         # TODO: returns a filtering matrix that can be used to filter and renormalize the policy
         # probability distribution. Matrix shape will depend on the type of action.
         #   - for placement actions, shape is 49 x 49 x 3 
@@ -120,6 +125,7 @@ class ZertzGame():
         return actions
 
     def _is_game_over(self):
+        # TODO: remove player
         # Return True if ended or False if not ended
         # Check if any player's captured marbles are enough to satisfy a win condition
         for win_con in self.win_con:
@@ -135,11 +141,12 @@ class ZertzGame():
                 if possible_win:
                     return True
         # If board has every ring covered with a marble then the last player who played is winner
-        if np.all(self.board.state != 1):
+        if np.all(np.sum(self.board.state[:4], axis=0) != 1):
             return True
         return False
 
     def get_game_ended(self, cur_state=None):
+        # TODO: remove player
         # Returns 1 if first player won and -1 if second player won.
         # If no players have won then return 0.
         if cur_state is None:

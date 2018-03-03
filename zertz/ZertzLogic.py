@@ -86,14 +86,15 @@ class Board():
             #   -  t * 4 + 8 = player 2 gray marbles ([0, 10])
             #   -  t * 4 + 9 = player 2 black marbles ([0, 10])
             #   - t * 4 + 10 = current player (0 or 1)
-            layers = (len(marbles) + 1) * t + 11
+            self.t = t
+            layers = 4 * self.t + 11
             self._CAPTURE_LAYER = self.t * 4
             self._MARBLE_TO_SUPPLY = {'w': self.t * 4 + 1,
                                       'g': self.t * 4 + 2,
                                       'b': self.t * 4 + 3}
 
             # Initialize state as 3d array
-            self.state = np.zeros((self.width, self.width, layers), dtype=np.uint8)
+            self.state = np.zeros((layers, self.width, self.width), dtype=np.uint8)
 
             # Place rings
             # TODO: implement for uneven number of rings
@@ -189,7 +190,7 @@ class Board():
 
     def _get_marble_type_at(self, index):
         y, x = index
-        marble_type = self._LAYER_TO_MARBLE(np.argmax(self.state[1:4, y, x]) + 1)
+        marble_type = self._LAYER_TO_MARBLE[np.argmax(self.state[1:4, y, x]) + 1]
         return marble_type
 
     def take_action(self, action, player):
@@ -225,8 +226,8 @@ class Board():
                 opposite_empty = False
                 for neighbor in self._get_neighbors(rem_index)[:3]:
                     opposite = self._get_jump_dst(neighbor, rem_index)
-                    if ((not self._is_inbounds(neighbor) or self.state[neighbor] == 0)
-                            and (not self._is_inbounds(opposite) or self.state[opposite] == 0)):
+                    if ((not self._is_inbounds(neighbor) or self.state[0][neighbor] == 0)
+                            and (not self._is_inbounds(opposite) or self.state[0][opposite] == 0)):
                         opposite_empty = True
                         break
                 if opposite_empty:
@@ -248,7 +249,7 @@ class Board():
                                     if np.sum(self.state[1:4, y, x]) == 1:
                                         captured_type = self._get_marble_type_at(index)
                                     supply_layer = self._get_cur_player_supply_layer(captured_type)
-                                    self.state[supply_player] += 1
+                                    self.state[supply_layer] += 1
                                     # Set the ring and marble layers all to 0
                                     self.state[0:4, y, x] = 0
 
@@ -258,7 +259,8 @@ class Board():
         elif action[0][0] == 'CAP':
             # Remove the marble doing the capturing from its origin ring
             _, marble_type, src_index = action[0]
-            self.state[src_index] = 1
+            y, x = src_index
+            self.state[1:4, y, x] = 0
             for captured_type, dst_index in action[1:]:
                 # Give the captured marble to the player
                 supply_layer = self._get_cur_player_supply_layer(captured_type)
