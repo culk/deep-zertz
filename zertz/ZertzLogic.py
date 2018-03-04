@@ -299,6 +299,7 @@ class Board():
                 if self._is_inbounds(next_dst) and np.sum(self.state[:4, y, x]) == 1:
                     # Set the captured layer to 1 at dst_index
                     self.state[self._CAPTURE_LAYER][dst_index] = 1
+                    break
 
         # Update current player if there are no forced chain captures
         if np.sum(self.state[self._CAPTURE_LAYER]) == 0:
@@ -308,7 +309,7 @@ class Board():
         # Return a matrix that can be used to filter the policy distribution for valid actions
         # that are valid with the current game state.
         moves = self.get_capture_moves()
-        if moves:
+        if np.any(moves):
             return (moves, 'CAP')
         # If there are no forced captures then build list of placement moves.
         moves = self.get_placement_moves()
@@ -322,8 +323,8 @@ class Board():
         moves = np.zeros((3, self.width**2, self.width**2 + 1), dtype=bool)
 
         # Build list of open and removable rings for marble placement and ring removal
-        open_rings = self._get_open_rings()
-        removable_rings = self._get_removable_rings()
+        open_rings = list(self._get_open_rings())
+        removable_rings = list(self._get_removable_rings())
 
         # Get list of marble types that can be placed. If supply is empty then
         # the player must use a captured marble.
@@ -369,10 +370,10 @@ class Board():
             for direction, neighbor in enumerate(neighbors):
                 # Check each neighbor to see if it has a marble and the jump destination is empty
                 y, x = neighbor
-                if np.sum(self.state[1:4, y, x]) == 1:
+                if self._is_inbounds(neighbor) and np.sum(self.state[1:4, y, x]) == 1:
                     dst_index = self._get_jump_dst(src_index, neighbor)
-                    y, x = next_dst
-                    if self._is_inbounds(next_dst) and np.sum(self.state[:4, y, x]) == 1:
+                    y, x = dst_index
+                    if self._is_inbounds(dst_index) and np.sum(self.state[:4, y, x]) == 1:
                         # Set this move as a valid action in the filter matrix
                         moves[direction, src_y, src_x] = True
         return moves

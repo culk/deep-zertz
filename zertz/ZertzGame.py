@@ -53,7 +53,7 @@ class ZertzGame():
         player_value = self.get_cur_player_value()
         return (board_state, player_value)
 
-    def get_next_state(self, action, cur_state=None):
+    def get_next_state(self, action, action_type, cur_state=None):
         # Input:
         #   - An action which consists of a marble placement and a ring to remove or a capture
         #   - Optional: cur_state = an arbitrary board state to use instead of the current game state
@@ -62,13 +62,13 @@ class ZertzGame():
         #   - integer (1 or -1) giving the value of the current player
         if cur_state is None:
             # Use the internal game state to determine the next state
-            self.board.take_action(action)
-            next_state = self.get_current_state()
+            self.board.take_action(action, action_type)
+            board_state, player_value = self.get_current_state()
         else:
             # Return the next state for an arbitrary marble supply, board and player
             temp_game = ZertzGame(clone=self, clone_state=cur_state)
-            next_state = temp_game.get_next_state(action)
-        return next_state
+            board_state, player_value = temp_game.get_next_state(action, action_type)
+        return (board_state, player_value)
 
     def get_valid_actions(self, cur_state=None):
         # Returns a filtering matrix that can be used to filter and renormalize the policy
