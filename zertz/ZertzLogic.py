@@ -1,4 +1,5 @@
 from collections import deque
+import copy
 import numpy as np
 
 
@@ -14,13 +15,6 @@ class Board():
     #     B1 C2 D3 E3 F3 G3
     #        C1 D2 E2 F2 G2
     #           D1 E1 F1 G1
-    #
-    # The value of each location corresponds to:
-    #   - 0 = no ring
-    #   - 1 = ring
-    #   - 2 = white marble
-    #   - 3 = gray marble
-    #   - 4 = black marble
     #
     # A placement action is a tuple in the form:
     #   ((placement, marble_type, ring), (remove, ring))
@@ -44,9 +38,8 @@ class Board():
     _DIRECTIONS = [(1, 0), (0, -1), (-1, -1), (-1, 0), (0, 1), (1, 1)]
 
     def __init__(self, rings=37, marbles=None, t=1, clone=None):
-        # TODO: replace the current board state data structure with the matrix that 
-        # will be used as input for the neural network with the following structure:
-        #   - L x H x W, H = W = Board width, L = Layers:
+        # Return a Board object to store the board state
+        #   - State is a matrix with dimensions L x H x W, H = W = Board width, L = Layers:
         #     - (# of marble types + 1) x (time history) binary to record previous board positions
         #     - 1 layer binary with a 1 at the index of a marble that needs to be used for capture
         #     - 9 layers, each same value one for each index in the supply
@@ -54,6 +47,9 @@ class Board():
         if clone is not None:
             self.rings = clone.rings
             self.width = clone.width
+            self.t = clone.t
+            self._CAPTURE_LAYER = clone._CAPTURE_LAYER
+            self._MARBLE_TO_SUPPLY = copy.copy(clone._MARBLE_TO_SUPPLY)
             self.state = np.copy(clone.state)
         else:
             # Determine width of board from the number of rings
@@ -66,7 +62,6 @@ class Board():
                     self.width = width
             assert self.width != 0
 
-            # TODO: handle (t) marble/ring layers
             # Calculate the number of layers
             # 4 * t layers for all pieces going back t steps, 9 for supply, 1 for capture, 1 for player
             # Layer:
@@ -172,7 +167,7 @@ class Board():
             regions.append(region)
         return regions
 
-    def _get_cur_player(self):
+    def get_cur_player(self):
         return self.state[self.t * 4 + 10, 0, 0]
 
     def _next_player(self):
@@ -182,7 +177,7 @@ class Board():
         # Return the layer index for the captured marble type and the current player
         # Input: captured_type = 'w', 'g', or 'b'
         supply_layer = self._MARBLE_TO_SUPPLY[marble_type]
-        if self._get_cur_player() == 0:
+        if self.get_cur_player() == 0:
             supply_layer += 3
         else:
             supply_layer += 6
@@ -193,8 +188,8 @@ class Board():
         marble_type = self._LAYER_TO_MARBLE[np.argmax(self.state[1:4, y, x]) + 1]
         return marble_type
 
-    def take_action(self, action, player):
-        # TODO: remove player as a parameter (game state already knows current player)
+    def take_action(self, action):
+        # TODO: modify the capture layer
         # TODO: modify to take capture actions one jump at a time and not transition control from
         # the player until the captures are no longer available with the capturing marble
         # Push back the previous t states and copy the most recent state to the top 4 layers
@@ -278,8 +273,7 @@ class Board():
             # Update current player
             self._next_player()
 
-    def get_valid_moves(self, player):
-        # TODO: remove player as a parameter
+    def get_valid_moves(self):
         # TODO: modify to return a matrix that can be used to filter the policy probability distribution
         # Return a list of moves that are valid with the current game state.
         # Player is required in the case that the marble supply is empty.
