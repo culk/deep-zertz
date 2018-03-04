@@ -280,12 +280,13 @@ class Board():
         self.state[marble_layer][src_index] = 0
         self.state[marble_layer][dst_index] = 1
 
-        # Remove the captured marble from the board and give it to the current player
+        # Give the captured marble to the current player and remove it from the board
         y, x = cap_index
-        self.state[1:4, y, x] = 0
+        assert np.sum(self.state[1:4, y, x]) == 1
         captured_type = self._get_marble_type_at(cap_index)
         supply_layer = self._get_cur_player_supply_layer(captured_type)
         self.state[supply_layer] += 1
+        self.state[1:4, y, x] = 0
         
         # Update the capture layer if there is a forced chain capture
         neighbors = self. _get_neighbors(dst_index)
@@ -304,13 +305,26 @@ class Board():
             self._next_player()
 
     def get_valid_moves(self):
-        # TODO: modify to return a matrix that can be used to filter the policy probability distribution
-        # Return a list of moves that are valid with the current game state.
-        # Player is required in the case that the marble supply is empty.
-        moves = self._get_capture_moves()
+        # Return a matrix that can be used to filter the policy distribution for valid actions
+        # that are valid with the current game state.
+        moves = self.get_capture_moves()
         if moves:
-            return moves
+            return (moves, 'CAP')
         # If there are no forced captures then build list of placement moves.
+        moves = self.get_placement_moves()
+        return (moves, 'PUT')
+
+    def get_placement_moves(self):
+        # Return a boolean matrix of size (3 x w^2 x w^2 + 1) with the value True at
+        # every index that corresponds to a valid placement action.
+        # Marble types correspond to the following indices {'w':0, 'g':1, 'b':2}
+        # A ring removal value of w^2 indicates no ring is removed
+        moves = np.zeros((3, self.width**2, self.width**2 + 1), dtype=bool)
+
+        # Build list of open and removable rings for marble placement and ring removal
+        open_rings = self._get_open_rings()
+        removable_rings = self._get_removable_rings()
+
         # Get list of marble types that can be placed. If supply is empty then
         # the player must use a captured marble.
         supply_start = self._MARBLE_TO_SUPPLY['w']
@@ -320,58 +334,52 @@ class Board():
             else:
                 supply_start += 6
 
-        for layer, marble_count in enumerate(self.state[supply_start: supply_start+3, 0, 0]):
+        # Assign 1 to all indices that are valid actions
+        for m, marble_count in enumerate(self.state[supply_start: supply_start+3, 0, 0]):
             if marble_count == 0:
                 continue
-            marble_type = self._LAYER_TO_MARBLE[layer + 1]
-            open_rings = self._get_open_rings()
-            removable_rings = self._get_removable_rings()
-            for put in open_rings:
-                for rem in removable_rings:
+            for put_index in open_rings:
+                put = put_index[0] * self.width + put_index[1]
+                for rem_index in removable_rings:
+                    rem = rem_index[0] * self.width + rem_index[1]
                     if put != rem:
-                        moves.append((('PUT', marble_type, put), ('REM', rem)))
+                        moves[m, put, rem] = True
                 # If there are no removable rings then you are not required to remove one
-                if not removable_rings or (len(removable_rings) == 1 and removable_rings[0] == put):
-                    moves.append((('PUT', marble_type, put), ('REM', None)))
+                if not removable_rings or (len(removable_rings) == 1 and removable_rings[0] == put_index):
+                    rem = self.width**2
+                    moves[m, put, rem] = True
         return moves
 
-    def _get_capture_moves(self):
-        # TODO: modify to return the capture policy filtering matrix
-        # TODO: take into account if there is a marble that much be used for capture
-        # Return a list of all possible capture moves in the form of tuples
-        def build_capture_chain(start, visited, marbles):
-            # Recursively build the capture chain for all capture options.
-            # Returns a list of lists for all possible capture branches.
-            moves = []
-            for i, index in enumerate(marbles):
-                if i not in visited and self._is_adjacent(start, index):
-                    # if index is not visited and adjacent then get the landing index after the capture
-                    dst = self._get_jump_dst(start, index)
-                    if self._is_inbounds(dst) and self.state[0][dst] == 1:
-                        # if the landing index is in bounds and on an empty ring
-                        marble_type = self._get_marble_type_at(index)
-                        captured = [(marble_type, dst)]
-                        chains = build_capture_chain(dst, visited + [i], marbles)
-                        if chains:
-                            moves += [captured + chain for chain in chains]
-                        else:
-                            moves += [captured]
-            return moves
+    def get_capture_moves(self):
+        # Return a boolean matrix of size (6 x w x w) with the value True at
+        # every index that corresponds to a valid capture action.
+        # The six directions are given by self._DIRECTIONS
+        moves = np.zeros((6, self.width, self.width), dtype=bool)
 
-        moves = []
-        # Create list of the indices of all marbles
-        occupied_rings = zip(*np.where(np.sum(self.state[1:4], axis=0) == 1))
-        for i, index in enumerate(occupied_rings):
-            marble_type = self._get_marble_type_at(index)
-            beginning = [('CAP', marble_type, index)]
-            chains = build_capture_chain(index, [i], occupied_rings)
-            for chain in chains:
-                moves.append(tuple(beginning + chain))
+        # Create list of the indices of marbles that can be used to capture
+        if np.sum(self.state[self._CAPTURE_LAYER]) == 1:
+            occupied_rings = zip(*np.where(self.state[self._CAPTURE_LAYER] == 1))
+        else:
+            occupied_rings = zip(*np.where(np.sum(self.state[1:4], axis=0) == 1))
+
+        # Update matrix with all possible capture directions from each capturing marble
+        for src_index in occupied_rings:
+            src_y, src_x = src_index
+            neighbors = self._get_neighbors(src_index)
+            for direction, neighbor in enumerate(neighbors):
+                # Check each neighbor to see if it has a marble and the jump destination is empty
+                y, x = neighbor
+                if np.sum(self.state[1:4, y, x]) == 1:
+                    dst_index = self._get_jump_dst(src_index, neighbor)
+                    y, x = next_dst
+                    if self._is_inbounds(next_dst) and np.sum(self.state[:4, y, x]) == 1:
+                        # Set this move as a valid action in the filter matrix
+                        moves[direction, src_y, src_x] = True
         return moves
 
     def _get_open_rings(self):
         # Return a list of indices for all of the open rings
-        open_rings = zip(*np.where(np.sum(self.state[0:4], axis=0) == 1))
+        open_rings = zip(*np.where(np.sum(self.state[:4], axis=0) == 1))
         return open_rings
 
     def _is_removable(self, index):

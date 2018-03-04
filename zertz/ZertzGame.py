@@ -71,41 +71,27 @@ class ZertzGame():
         return next_state
 
     def get_valid_actions(self, cur_state=None):
-        # TODO: returns a filtering matrix that can be used to filter and renormalize the policy
-        # probability distribution. Matrix shape will depend on the type of action.
-        #   - for placement actions, shape is 49 x 49 x 3 
-        #   - for capture actions, shape is 7 x 7 x 6
-        #     - capture actions will also be broken down into capture steps with a step for each jump
-        # A move is in the form:
-        #   ([Place/Capture], [marble type], [marble placement], [ring removed])
-        # Capturing marbles is compulsory, check if a capture is possible and return list of options
-        # Available moves is every combination of:
-        #   -marble type in supply (up to 3)
-        #   -open rings for marble placement (up to self.rings)
-        #   -edge rings for removal (up to 18 for rings=37)
+        # Returns a filtering matrix that can be used to filter and renormalize the policy
+        # probability distribution. Capturing is compulsory so if there is a valid capture action
+        # then the matrix of placement actions will all be False. Matrix shape depends on the action type.
+        #   - for placement actions, shape is 3 x width^2 x (width^2 + 1) and action_type is 'PUT'
+        #   - for capture actions, shape is 6 x width x width and action_type is 'CAP'
+        #     - capture actions only end the current players turn if there are no more chain captures
         if cur_state is None:
-            actions = self.board.get_valid_moves()
+            actions, action_type = self.board.get_valid_moves()
         else:
             # Return the valid actions for an arbitrary marble supply, board and player
             temp_game = ZertzGame(clone=self, clone_state=cur_state)
-            actions = temp_game.get_valid_actions()
-        return actions
-
-    def get_valid_capture_actions(self, cur_state=None):
-        # TODO: implement
-        pass
+            actions, action_type = temp_game.get_valid_actions()
+        return actions, action_type
 
     def get_capture_action_size(self):
-        # TODO: implement
-        pass
-
-    def get_valid_placement_actions(self, cur_state=None):
-        # TODO: implement
-        pass
+        # Return the number of possible capture actions
+        return 6 * self.board.width**2
 
     def get_placement_action_size(self):
-        # TODO: implement
-        pass
+        # Return the number of possible placement actions
+        return 3 * self.width**2 * (self.width**2 + 1)
 
     def _is_game_over(self):
         # Return True if ended or False if not ended
