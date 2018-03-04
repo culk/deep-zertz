@@ -188,89 +188,119 @@ class Board():
         marble_type = self._LAYER_TO_MARBLE[np.argmax(self.state[1:4, y, x]) + 1]
         return marble_type
 
-    def take_action(self, action):
-        # TODO: modify the capture layer
-        # TODO: modify to take capture actions one jump at a time and not transition control from
-        # the player until the captures are no longer available with the capturing marble
+    def take_action(self, action, action_type):
+        # Input: action is an index into the action space matrix
+        #        action_type is 'PUT' or 'CAP'
         # Push back the previous t states and copy the most recent state to the top 4 layers
         self.state[0: 4*self.t] = np.concatenate([self.state[0:4], self.state[0: 4*(self.t-1)]], axis=0)
 
         # Modify the most recent 4 layers of the state based on the action
-        if action[0][0] == 'PUT':
-            _, marble_type, put_index = action[0]
-            _, rem_index = action[1]
+        if action_type == 'PUT':
+            self.take_placement_action(action)
+        elif action_type == 'CAP':
+            self.take_capture_action(action)
 
-            # Place the marble on the board
-            put_layer = self._MARBLE_TO_LAYER[marble_type] 
-            self.state[put_layer][put_index] = 1
+    def take_placement_action(self, action):
+        # Placement actions have dimension (3 x w^2 x w^2 + 1)
+        # Translate the action dimensions into marble_type, put_index, and rem_index
+        type_index, put_loc, rem_loc = action
+        marble_type = self._LAYER_TO_MARBLE[type_index + 1]
+        put_index = (put_loc // self.width, put_loc % self.width) 
+        if rem_loc == self.width**2:
+            rem_index = None
+        else:
+            rem_index = (rem_loc // self.width, rem_loc % self.width)
 
-            # Remove the marble from the supply
-            supply_layer = self._MARBLE_TO_SUPPLY[marble_type]
-            if self.state[supply_layer, 0, 0] > 1:
-                self.state[supply_layer] -= 1
-            else:
-                # If supply is empty then take the marble from those the player has captured
-                supply_layer = self._get_cur_player_layer(marble_type)
-                self.state[supply_layer] -= 1
+        # Place the marble on the board
+        put_layer = self._MARBLE_TO_LAYER[marble_type] 
+        self.state[put_layer][put_index] = 1
 
-            # Remove the ring from the board
-            if rem_index is not None:
-                self.state[0][rem_index] = 0
-                # Check if it is possbile for the board to have been separated into regions. This is only 
-                # possible if two of the empty neighbors are opposites.
-                opposite_empty = False
-                for neighbor in self._get_neighbors(rem_index)[:3]:
-                    opposite = self._get_jump_dst(neighbor, rem_index)
-                    if ((not self._is_inbounds(neighbor) or self.state[0][neighbor] == 0)
-                            and (not self._is_inbounds(opposite) or self.state[0][opposite] == 0)):
-                        opposite_empty = True
-                        break
-                if opposite_empty:
-                    # Get list of regions
-                    regions = self._get_regions()
-                    # If the board has been separated into multiple regions then check if any are captured
-                    if len(regions) > 1:
-                        for region in regions:
-                            captured = True
-                            # A region is captured if every ring in the region is occupied by a marble
-                            for y, x in region:
-                                if np.sum(self.state[1:4, y, x]) == 0:
-                                    captured = False
-                                    break
-                            if captured:
-                                # Remove all rings in the captured region and give the marbles to the player
-                                for index in region:
-                                    y, x = index
-                                    if np.sum(self.state[1:4, y, x]) == 1:
-                                        captured_type = self._get_marble_type_at(index)
-                                    supply_layer = self._get_cur_player_supply_layer(captured_type)
-                                    self.state[supply_layer] += 1
-                                    # Set the ring and marble layers all to 0
-                                    self.state[0:4, y, x] = 0
+        # Remove the marble from the supply
+        supply_layer = self._MARBLE_TO_SUPPLY[marble_type]
+        if self.state[supply_layer, 0, 0] > 1:
+            self.state[supply_layer] -= 1
+        else:
+            # If supply is empty then take the marble from those the player has captured
+            supply_layer = self._get_cur_player_layer(marble_type)
+            self.state[supply_layer] -= 1
 
-            # Update current player
-            self._next_player()
+        # Remove the ring from the board
+        if rem_index is not None:
+            self.state[0][rem_index] = 0
+            # Check if it is possbile for the board to have been separated into regions. This is only 
+            # possible if two of the empty neighbors are opposites.
+            opposite_empty = False
+            for neighbor in self._get_neighbors(rem_index)[:3]:
+                opposite = self._get_jump_dst(neighbor, rem_index)
+                if ((not self._is_inbounds(neighbor) or self.state[0][neighbor] == 0)
+                        and (not self._is_inbounds(opposite) or self.state[0][opposite] == 0)):
+                    opposite_empty = True
+                    break
+            if opposite_empty:
+                # Get list of regions
+                regions = self._get_regions()
+                # If the board has been separated into multiple regions then check if any are captured
+                if len(regions) > 1:
+                    for region in regions:
+                        captured = True
+                        # A region is captured if every ring in the region is occupied by a marble
+                        for y, x in region:
+                            if np.sum(self.state[1:4, y, x]) == 0:
+                                captured = False
+                                break
+                        if captured:
+                            # Remove all rings in the captured region and give the marbles to the player
+                            for index in region:
+                                y, x = index
+                                if np.sum(self.state[1:4, y, x]) == 1:
+                                    captured_type = self._get_marble_type_at(index)
+                                supply_layer = self._get_cur_player_supply_layer(captured_type)
+                                self.state[supply_layer] += 1
+                                # Set the ring and marble layers all to 0
+                                self.state[0:4, y, x] = 0
 
-        elif action[0][0] == 'CAP':
-            # Remove the marble doing the capturing from its origin ring
-            _, marble_type, src_index = action[0]
-            y, x = src_index
-            self.state[1:4, y, x] = 0
-            for captured_type, dst_index in action[1:]:
-                # Give the captured marble to the player
-                supply_layer = self._get_cur_player_supply_layer(captured_type)
-                self.state[supply_layer] += 1
+        # Update current player
+        self._next_player()
 
-                # Remove the captured marble from the board and update the capturing marbles location
-                y, x = self._get_middle_ring(src_index, dst_index)
-                self.state[1:4, y, x] = 0
-                src_index = dst_index
+    def take_capture_action(self, action):
+        # Capture actions have dimension (6 x w x w)
+        # Translate the action dimensions into src_index, marble_type, cap_index and dst_index
+        direction, y, x = action
+        src_index = (y, x)
+        marble_type = self._get_marble_type_at(src_index)
+        dy, dx = self._DIRECTIONS[direction]
+        cap_index = (y + dy, x + dx)
+        dst_index = self._get_jump_dst(src_index, cap_index)
 
-            # Place the capturing marble in its final destination ring
-            marble_layer = self._MARBLE_TO_LAYER[marble_type] 
-            self.state[marble_layer][src_index] = 1
+        # Reset the capture layer
+        self.state[self._CAPTURE_LAYER] = 0
 
-            # Update current player
+        # Remove capturing marble from src_index and place it at dst_index
+        marble_layer = self._MARBLE_TO_LAYER[marble_type] 
+        self.state[marble_layer][src_index] = 0
+        self.state[marble_layer][dst_index] = 1
+
+        # Remove the captured marble from the board and give it to the current player
+        y, x = cap_index
+        self.state[1:4, y, x] = 0
+        captured_type = self._get_marble_type_at(cap_index)
+        supply_layer = self._get_cur_player_supply_layer(captured_type)
+        self.state[supply_layer] += 1
+        
+        # Update the capture layer if there is a forced chain capture
+        neighbors = self. _get_neighbors(dst_index)
+        for neighbor in neighbors:
+            y, x = neighbor
+            # Check each neighbor to see if it has a marble
+            if self._is_inbounds(neighbor) and np.sum(self.state[1:4, y, x]) == 1:
+                next_dst = self._get_jump_dst(dst_index, neighbor)
+                y, x = next_dst
+                if self._is_inbounds(next_dst) and np.sum(self.state[:4, y, x]) == 1:
+                    # Set the captured layer to 1 at dst_index
+                    self.state[self._CAPTURE_LAYER][dst_index] = 1
+
+        # Update current player if there are no forced chain captures
+        if np.sum(self.state[self._CAPTURE_LAYER]) == 0:
             self._next_player()
 
     def get_valid_moves(self):
