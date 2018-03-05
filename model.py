@@ -1,9 +1,25 @@
+'''
+This file is a wrapper of the models including functions for training and evaluation
+'''
 from neural_nets import LinearModel, DenseModel, ConvModel
 import numpy as np
 import os
 
 class NNetWrapper(object):
     def __init__(self, game, config):
+        '''
+        Game, an object, needs to have the following attributes:
+        game.getBoardSize() -> a tuple like (4, 4)
+
+        game.getActionSize() -> a tuple of (putActionSize, captureActionSize), where each of the actionSize is a tuple
+            - putActionSize = (16, 17, 3) * three dimensional
+            - captureActionSize = (16, 6) * two dimensional
+
+        game.getStateDepth() -> int. How deep is each state, such as 11
+
+        :param game: A game object
+        :param config: A config object. It's by default the config.py
+        '''
         self.config = config
         self.game = game
 
@@ -23,7 +39,15 @@ class NNetWrapper(object):
 
     def train(self, examples):
         '''
-        :param examples: (state, pi_put, pi_capture, v). State has shape (num_examples, x * y * d)
+        :param examples: (state, pi_put, pi_capture, v) a tuple
+                if linear or dense model:
+                    state size=(num_examples, board_x * board_y * state_depth)
+                if conv or res model:
+                    state size=(num_examples, board_x, board_y, state_depth)
+
+                pi_put size = (num_examples, put_pi_size[0] * put_pi_size[1] * put_pi_size[2])
+                pi_capture size = (num_examples, capture_pi_size[0] * capture_pi_size[1])
+                v size = (num_examples, 1)
         :return:
         '''
         input_states, target_put_pis, target_capture_pis, target_vs = examples

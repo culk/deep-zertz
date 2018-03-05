@@ -3,6 +3,9 @@ import numpy as np
 from config import Config
 
 class Game(object):
+    '''
+    This is an example of Game that is compatible with the neural networks
+    '''
     def __init__(self):
         print 'New Game built!'
 
@@ -19,6 +22,12 @@ class Game(object):
 
 
 def generate_states(game, num_states=10):
+    '''
+    This is an example of states that is compatible with the neural netowrks
+    :param game:
+    :param num_states:
+    :return:
+    '''
     board_x, board_y = game.getBoardSize()
     state_depth = game.getStateDepth()
     if Config.model == 'linear' or Config.model == 'dense':

@@ -1,10 +1,30 @@
+'''
+neural_nets.py contains various network structure, including linear model, dense model, conv model and residual net
+model
+'''
 from keras.layers import Input, Reshape, Dense, Conv2D, BatchNormalization, Activation, Flatten, Dropout
 from keras.models import Model
 from keras.optimizers import Adam
 import numpy as np
 
 class LinearModel(object):
+    '''
+    A linear model takes in a state and estimates the corresponding pi_put, pi_capture and v
+    '''
     def __init__(self, game, config):
+        '''
+        Game, an object, needs to have the following attributes:
+        game.getBoardSize() -> a tuple like (4, 4)
+
+        game.getActionSize() -> a tuple of (putActionSize, captureActionSize), where each of the actionSize is a tuple
+            - putActionSize = (16, 17, 3) * three dimensional
+            - captureActionSize = (16, 6) * two dimensional
+
+        game.getStateDepth() -> int. How deep is each state, such as 11
+
+        :param game: A game object
+        :param config: A config object. It's by default the config.py
+        '''
         self.board_x, self.board_y = game.getBoardSize()
         self.state_depth = game.getStateDepth()
         self.put_action_size, self.capture_action_size = game.getActionSize()
@@ -26,7 +46,24 @@ class LinearModel(object):
                            optimizer=Adam(self.config.lr))
 
 class DenseModel(object):
+    '''
+    Fully connected neural networks. Number of layers is decided by config.num_layers
+    '''
     def __init__(self, game, config):
+        '''
+        Game, an object, needs to have the following attributes:
+        game.getBoardSize() -> a tuple like (4, 4)
+
+        game.getActionSize() -> a tuple of (putActionSize, captureActionSize), where each of the actionSize is a tuple
+            - putActionSize = (16, 17, 3) * three dimensional
+            - captureActionSize = (16, 6) * two dimensional
+
+        game.getStateDepth() -> int. How deep is each state, such as 11
+
+        :param game: A game object
+        :param config: A config object. It's by default the config.py
+        '''
+
         self.board_x, self.board_y = game.getBoardSize()
         self.state_depth = game.getStateDepth()
         self.put_action_size, self.capture_action_size = game.getActionSize()
@@ -52,7 +89,23 @@ class DenseModel(object):
 
 
 class ConvModel(object):
+    '''
+    A convolution NN. filters are decided by config.num_filters and config.kernel_size
+    '''
     def __init__(self, game, config):
+        '''
+        Game, an object, needs to have the following attributes:
+        game.getBoardSize() -> a tuple like (4, 4)
+
+        game.getActionSize() -> a tuple of (putActionSize, captureActionSize), where each of the actionSize is a tuple
+            - putActionSize = (16, 17, 3) * three dimensional
+            - captureActionSize = (16, 6) * two dimensional
+
+        game.getStateDepth() -> int. How deep is each state, such as 11
+
+        :param game: A game object
+        :param config: A config object. It's by default the config.py
+        '''
         self.board_x, self.board_y = game.getBoardSize()
         self.state_depth = game.getStateDepth()
         self.put_action_size, self.capture_action_size = game.getActionSize()
