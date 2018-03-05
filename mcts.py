@@ -69,13 +69,13 @@ class MCTS(object):
         self.num_sim = num_sim
         self.root = Node(None, 1.0)
 
-    # should be able to get rid of player argument if we have canonical board
     def simulate(self, state):
         """
         Perform one simulation of MCTS. Recursively called until a leaf is found.
         Then uses policy_fn to make prediction of (p,v). This value is propogated up the 
         path.
-
+        Args:
+            state is a tuple of (board_state, player)
         NOTE: board should be a deep copy of original board
         """
 
@@ -84,7 +84,7 @@ class MCTS(object):
             if node.is_leaf():
                 break
             action = node.get_action(self.c_puct)
-            state = self.game.get_next_state(self, action, state)
+            state = self.game.get_next_state(self, action, ACTION_TYPE, state)
 
         p, v = self.policy_fn(state)
 

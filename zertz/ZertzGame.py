@@ -22,7 +22,8 @@ class ZertzGame():
             #   default: 37 rings (approximately 7x7 hex)
             self.initial_rings = rings
             self.t = t
-            self.board = Board(self.initial_rings, marbles, self.t)
+            self.marbles = marbles
+            self.board = Board(self.initial_rings, self.marbles, self.t)
 
             # The win conditions (amount of each marble needed)
             #   default:
@@ -36,6 +37,9 @@ class ZertzGame():
                                 {'w': 4}, {'g': 5}, {'b': 6}]
             else:
                 self.win_con = win_con
+
+    def reset_board():
+        self.board = Board(self.initial_rings, self.marbles, self.t)
 
     def get_cur_player_value(self):
         # Returns 1 if current player is player 0 and -1 if current player is player 1
