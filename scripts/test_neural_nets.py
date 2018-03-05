@@ -36,15 +36,12 @@ def generate_train_examples(game, num_examples=1000):
 
     if Config.model == 'linear' or Config.model == 'dense':
         states = np.random.randint(2, size=(num_examples, board_x * board_y * state_depth))
-        put_pi = np.random.random((num_examples, put_pi_size[0] * put_pi_size[1] * put_pi_size[2]))
-        capture_pi = np.random.random((num_examples, capture_pi_size[0] * capture_pi_size[1]))
-        v = np.random.random((num_examples, 1))
-
     else:
-        states = np.random.randint(2, (num_examples, board_x, board_y, state_depth))
-        put_pi = np.random.random((num_examples, put_pi_size[0], put_pi_size[1], put_pi_size[2]))
-        capture_pi = np.random.random((num_examples, capture_pi_size[0], capture_pi_size[1]))
-        v = np.random.random((num_examples, 1))
+        states = np.random.randint(2, size=(num_examples, board_x, board_y, state_depth))
+
+    put_pi = np.random.random((num_examples, put_pi_size[0] * put_pi_size[1] * put_pi_size[2]))
+    capture_pi = np.random.random((num_examples, capture_pi_size[0] * capture_pi_size[1]))
+    v = np.random.random((num_examples, 1))
 
     examples = (states, put_pi, capture_pi, v)
     return examples
@@ -58,8 +55,6 @@ def test_model():
 
     model.train(examples)
     put_pi, capture_pi, v = model.predict(eval_states)
-
-    print eval_states.shape
 
     print 'Predicting...'
     print 'put_pi = ', put_pi.shape
