@@ -5,11 +5,15 @@ class Config(object):
     information parameters. Model objects are passed a Config() object at
     instantiation.
     """
+    models = ['linear', 'dense']
+
     hidden_size = 200
     lr = 0.001
 
     batch_size = 20
     epochs = 10
 
-    model = 'linear'
+    num_layers = 5
+
+    model = models[1]
     checkpoint_folder = 'checkpoint'

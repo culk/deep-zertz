@@ -1,4 +1,4 @@
-from neural_nets import LinearModel
+from neural_nets import LinearModel, DenseModel
 import numpy as np
 import os
 
@@ -9,6 +9,8 @@ class NNetWrapper(object):
 
         if self.config.model == 'linear':
             self.nnet = LinearModel(game, config)
+        elif self.config.model == 'dense':
+            self.nnet = DenseModel(game, config)
         else:
             raise ValueError('The model ' + self.config.model + ' has not been implemented!')
 
@@ -36,10 +38,10 @@ class NNetWrapper(object):
         put_pi, capture_pi, v = self.nnet.model.predict(states)
 
         put_pi_size, capture_pi_size = self.game.getActionSize()
-        put_pi = np.reshape(put_pi[0], (-1, put_pi_size[0], put_pi_size[1], put_pi_size[2]))
-        capture_pi = np.reshape(capture_pi[0], (-1, capture_pi_size[0], capture_pi_size[1]))
+        put_pi = np.reshape(put_pi, (-1, put_pi_size[0], put_pi_size[1], put_pi_size[2]))
+        capture_pi = np.reshape(capture_pi, (-1, capture_pi_size[0], capture_pi_size[1]))
 
-        return put_pi, capture_pi, v[0]
+        return put_pi, capture_pi, v
 
 
     def save_checkpoint(self, filename='checkpoint.pth.tar'):
