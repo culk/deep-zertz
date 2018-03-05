@@ -54,15 +54,15 @@ class RandomStrategy(ZertzGame):
             print '-----------------------'
             print 'Current player is player %i' %player
 
-            if player == 0:
+            if player == 1:
                 action = self.get_random_action()
                 print 'Random player action: ', action
                 episode.append((state, action, player))
                 state = self.get_next_state(action)
 
             else:
-                assert player == 1
-                action = raw_input('Please enter AI action: ')
+                assert player == 0
+                action = raw_input('Please enter AI action: ') # TODO: the action is a string and need to be transform into a tuple
                 print 'AI action ', action
                 episode.append((state, action, player))
                 state = self.get_next_state(action)

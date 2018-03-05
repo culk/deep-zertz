@@ -18,9 +18,9 @@ def test_loc2coords():
 
 if __name__ == '__main__':
     # test_loc2coords()
-    loc1 = "D5"
-    loc2 = "D3"
+    loc1 = "F3"
+    loc2 = "B1"
     loc3 = "C2"
-    # action = (('PUT', 'w', loc2coords(loc1)), ('REM', loc2coords(loc2)))
-    action = (('CAP', 'g', loc2coords(loc1)), ('w', loc2coords(loc2)))
+    action = (('PUT', 'b', loc2coords(loc1)), ('REM', loc2coords(loc2)))
+    # action = (('CAP', 'g', loc2coords(loc1)), ('w', loc2coords(loc2)))
     print action
