@@ -306,14 +306,15 @@ class Board():
             self._next_player()
 
     def get_valid_moves(self):
-        # Return a matrix that can be used to filter the policy distribution for valid actions
-        # that are valid with the current game state.
-        moves = self.get_capture_moves()
-        if np.any(moves):
-            return (moves, 'CAP')
-        # If there are no forced captures then build list of placement moves.
-        moves = self.get_placement_moves()
-        return (moves, 'PUT')
+        # Return two matrices that can be used to filter the placement and capture action policy
+        # distribution for actions that are valid with the current game state.
+        capture = self.get_capture_moves()
+        if np.any(capture):
+            # no placement move is allowed if there is a valid capture move
+            placement = np.zeros((3, self.width**2, self.width**2 + 1), dtype=bool)
+        else:
+            placement = self.get_placement_moves()
+        return (placement, capture)
 
     def get_placement_moves(self):
         # Return a boolean matrix of size (3 x w^2 x w^2 + 1) with the value True at

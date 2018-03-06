@@ -99,20 +99,20 @@ class TestZertzLogic(unittest.TestCase):
         options = [(3, 4, 4), (1, 3, 4), (2, 3, 4), (3, 2, 1), (2, 4, 4)]
         for option in options:
             test_actions[option] = True
-        valid_actions, action_type = board.get_valid_moves()
-        self.assertEqual(action_type, 'CAP')
-        self.assertTrue(np.all(test_actions == valid_actions))
+        placement, capture = board.get_valid_moves()
+        self.assertTrue(np.all(placement == False))
+        self.assertTrue(np.all(test_actions == capture))
         # Make one capture jump
         board.take_action((2, 4, 4), 'CAP')
         options = [(1, 2, 2), (4, 2, 2)]
         test_actions = np.zeros((6, 5, 5), dtype=bool)
         for option in options:
             test_actions[option] = True
-        valid_actions, action_type = board.get_valid_moves()
+        placement, capture = board.get_valid_moves()
         self.assertTrue(np.sum(board.state[board._CAPTURE_LAYER]) == 1)
         self.assertEqual(board.state[board._CAPTURE_LAYER, 2, 2], 1)
-        self.assertEqual(action_type, 'CAP')
-        self.assertTrue(np.all(test_actions == valid_actions))
+        self.assertTrue(np.all(placement == False))
+        self.assertTrue(np.all(test_actions == capture))
 
     def test_separated_board_simple(self):
         # Captured black marble goes to player 1
@@ -202,13 +202,13 @@ class TestZertzGame(unittest.TestCase):
 
     def test_get_actions(self):
         game = ZertzGame(19)
-        actions, action_type = game.get_valid_actions()
-        self.assertEqual(np.sum(actions), 648)
-        self.assertEqual(action_type, 'PUT')
+        placement, capture = game.get_valid_actions()
+        self.assertEqual(np.sum(placement), 648)
+        self.assertTrue(np.all(capture == False))
         game = ZertzGame(37)
-        actions, action_type = game.get_valid_actions()
-        self.assertEqual(np.sum(actions), 1944)
-        self.assertEqual(action_type, 'PUT')
+        placement, capture = game.get_valid_actions()
+        self.assertEqual(np.sum(placement), 1944)
+        self.assertTrue(np.all(capture == False))
         #(('PUT', 'w', (4, 4)), ('REM', (4, 3)))
         state = game.get_next_state((0, 32, 31), 'PUT')
         #(('PUT', 'b', (3, 4)), ('REM', (4, 2)))
@@ -219,14 +219,14 @@ class TestZertzGame(unittest.TestCase):
         game.get_next_state((2, 8, 22), 'PUT')
         #(('PUT', 'b', (2, 1)), ('REM', (0, 2)))
         game.get_next_state((2, 15, 2), 'PUT')
-        actions, action_type = game.get_valid_actions()
-        self.assertEqual(np.sum(actions), 5)
-        self.assertEqual(action_type, 'CAP')
+        placement, capture = game.get_valid_actions()
+        self.assertEqual(np.sum(capture), 5)
+        self.assertTrue(np.all(placement == False))
         game = ZertzGame(1)
-        actions, action_type = game.get_valid_actions()
-        self.assertEqual(np.sum(actions), 3)
-        self.assertTrue(np.all(actions[:, :, 1]))
-        self.assertEqual(action_type, 'PUT')
+        placement, capture = game.get_valid_actions()
+        self.assertEqual(np.sum(placement), 3)
+        self.assertTrue(np.all(placement[:, :, 1]))
+        self.assertTrue(np.all(capture == False))
 
     def test_take_actions(self):
         game = ZertzGame(19)
