@@ -14,7 +14,7 @@ class Config(object):
     epochs = 10
 
     num_layers = 5
-    num_filers = 10
+    num_filters = 10
     kernel_size = 2
     dropout = 0.1
 
