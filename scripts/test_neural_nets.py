@@ -30,10 +30,7 @@ def generate_states(game, num_states=10):
     '''
     board_x, board_y = game.getBoardSize()
     state_depth = game.getStateDepth()
-    if Config.model == 'linear' or Config.model == 'dense':
-        states = np.random.randint(2, size=(num_states, board_x * board_y * state_depth))
-    else:
-        states = np.random.randint(2, size=(num_states, board_x, board_y, state_depth))
+    states = np.random.randint(2, size=(num_states, board_x, board_y, state_depth))
     return states
 
 def generate_train_examples(game, num_examples=1000):
@@ -41,12 +38,7 @@ def generate_train_examples(game, num_examples=1000):
     board_x, board_y = game.getBoardSize()
     state_depth = game.getStateDepth()
     put_pi_size, capture_pi_size = game.getActionSize()
-
-
-    if Config.model == 'linear' or Config.model == 'dense':
-        states = np.random.randint(2, size=(num_examples, board_x * board_y * state_depth))
-    else:
-        states = np.random.randint(2, size=(num_examples, board_x, board_y, state_depth))
+    states = np.random.randint(2, size=(num_examples, board_x, board_y, state_depth))
 
     put_pi = np.random.random((num_examples, put_pi_size[0] * put_pi_size[1] * put_pi_size[2]))
     capture_pi = np.random.random((num_examples, capture_pi_size[0] * capture_pi_size[1]))

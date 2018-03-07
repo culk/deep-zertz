@@ -32,30 +32,27 @@ class NNetWrapper(object):
         else:
             raise ValueError('The model ' + self.config.model + ' has not been implemented!')
 
-        self.board_x, self.board_y = game.getBoardSize()
-        self.state_depth = game.getStateDepth()
-        self.put_action_size, self.capture_action_size = game.getActionSize()
+        self.state_depth, self.board_x, self.board_y = game.board.state.shape
+        self.put_action_size = game.get_placement_action_size()
+        self.capture_action_size = game.get_capture_action_size()
 
 
     def train(self, examples):
         '''
         :param examples: (state, pi_put, pi_capture, v) a tuple
-                if linear or dense model:
-                    state size=(num_examples, board_x * board_y * state_depth)
-                if conv or res model:
-                    state size=(num_examples, board_x, board_y, state_depth)
-
+                state size=(num_examples, board_x, board_y, state_depth)
                 pi_put size = (num_examples, put_pi_size[0] * put_pi_size[1] * put_pi_size[2])
                 pi_capture size = (num_examples, capture_pi_size[0] * capture_pi_size[1])
                 v size = (num_examples, 1)
         :return:
         '''
         input_states, target_put_pis, target_capture_pis, target_vs = examples
-        input_states = np.asarray(input_states)
 
+        input_states = np.asarray(input_states)
         target_put_pis = np.asarray(target_put_pis)
         target_capture_pis = np.asarray(target_capture_pis)
         target_vs = np.asarray(target_vs)
+
         self.nnet.model.fit(x=input_states, y=[target_put_pis, target_capture_pis, target_vs],
                             batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
 
