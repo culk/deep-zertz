@@ -12,6 +12,7 @@ class Node(object):
         self.Q = 0
         self.P = P
         self.child = {}
+        self.action_type = None # will be assigned upon expanding
         self.parent = parent
 
     def update(self, predicted_v):
@@ -30,10 +31,11 @@ class Node(object):
             self.parent.recurse_update(-predicted_v)
         self.update(predicted_v)
 
-    def expand(self, predicted_p):
+    def expand(self, action_type, predicted_p):
         """Expand the search tree by attaching child nodes to current state
         NOTE: assuming predicted_p is a list of tuple with action and coresponding prob
         """
+        self.action_type = action_type
         for action, prob in predicted_p:
             if action not in self.child:
                 self.child[action] = Node(self, prob)
@@ -49,7 +51,8 @@ class Node(object):
                 max_u = u
                 best_a = action
 
-        return best_a
+        assert(self.action_type is not None)
+        return self.action_type, best_a
 
     def is_leaf(self):
         return self.child == {}
@@ -83,17 +86,23 @@ class MCTS(object):
         while True:
             if node.is_leaf():
                 break
-            action = node.get_action(self.c_puct)
-            state = self.game.get_next_state(self, action, ACTION_TYPE, state)
+            action_type, best_a = node.get_action(self.c_puct)
+            state = self.game.get_next_state(self, best_a, action_type, state)
 
-        p, v = self.policy_fn(state)
+        p_placement, p_capture, v = self.policy_fn(state)
 
         winner = self.game.get_game_ended(state)
         if winner == 0:
             # No player has won
-            # TODO: need to filter out invalid moves before expand and renormalized
-            valids = self.game.get_valid_actions(state)
-            node.expand(p)
+            valid_placement, valid_capture = self.game.get_valid_actions(state)
+            if valid_placement is not None:
+                p_placement = np.multiply(p_placement * valid_placement)
+                p_placement /= np.sum(p_placement)
+                node.expand('PUT', p_placement)
+            else:
+                p_capture = np.multiply(p_capture * valid_capture)
+                p_capture /= np.sum(p_capture)
+                node.expand('CAP', p_capture)
         else:
             if state[2] == winner:
                 v = 1
@@ -109,6 +118,7 @@ class MCTS(object):
             state_copy = np.deep_copy(state)
             simulate(state_copy)
 
+        action_type = self.root.action_type
         Nas = [(action, node.N) for action, node in self.root.child.items()]
         actions, count = zip(*Nas)
         if temp==0:
@@ -119,4 +129,4 @@ class MCTS(object):
         counts = [x**(1./temp) for x in counts]
         probs = [x/float(sum(counts)) for x in counts]
          
-        return actions, probs
+        return action_type, actions, probs
