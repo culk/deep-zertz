@@ -94,9 +94,15 @@ class ZertzGame():
         # Return the number of possible capture actions
         return 6 * self.board.width**2
 
+    def get_capture_action_shape(self):
+        return self.board.get_capture_shape()
+
     def get_placement_action_size(self):
         # Return the number of possible placement actions
         return 3 * self.width**2 * (self.width**2 + 1)
+
+    def get_placement_action_shape(self):
+        return self.board.get_placement_shape()
 
     def _is_game_over(self):
         # Return True if ended or False if not ended
