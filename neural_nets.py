@@ -7,6 +7,20 @@ from keras.models import Model
 from keras.optimizers import Adam
 import numpy as np
 
+'''
+# Possible alternate loss function
+def combined_loss(args):
+    is_put, pi_put, pi_cap, v = args
+    not_is_put = Lambda(lambda x: (x - 1) * -1)
+    put_loss = categorical_crossentropy(
+    cap_loss = 
+    v_loss = 
+    return is_put * put_loss + not_is_put * cap_loss + v_loss
+
+# This part would go in each model
+custom_loss = Lambda(combined_loss, output_shape=(1,), name='combined_loss')([inputs, self.pi_put, self.pi_capture, self.v])
+'''
+
 class LinearModel(object):
     '''
     A linear model takes in a state and estimates the corresponding pi_put, pi_capture and v
@@ -108,7 +122,7 @@ class ConvModel(object):
         hidden = inputs
 
         for i in range(self.config.num_layers):
-            hidden = Activation('relu')(BatchNormalization(axis=3)(Conv2D(self.config.num_filers,
+            hidden = Activation('relu')(BatchNormalization(axis=3)(Conv2D(self.config.num_filters,
                                                                     self.config.kernel_size,
                                                                     padding='same',
                                                                     data_format='channels_first')(hidden)))
