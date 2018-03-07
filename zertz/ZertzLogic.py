@@ -316,6 +316,14 @@ class Board():
             placement = self.get_placement_moves()
         return (placement, capture)
 
+    def get_placement_shape(self):
+        # get shape of placement moves as a tuple
+        return (3, self.width**2, self.width**2 + 1)
+
+    def get_capture_shape(self):
+        # get shape of capture moves as a tuple
+        return (6, self.width, self.width)
+
     def get_placement_moves(self):
         # Return a boolean matrix of size (3 x w^2 x w^2 + 1) with the value True at
         # every index that corresponds to a valid placement action.

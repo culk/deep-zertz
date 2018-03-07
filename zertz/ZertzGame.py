@@ -95,6 +95,7 @@ class ZertzGame():
         return 6 * self.board.width**2
 
     def get_capture_action_shape(self):
+        # Return the shape of the capture actions as a tuple
         return self.board.get_capture_shape()
 
     def get_placement_action_size(self):
@@ -102,6 +103,7 @@ class ZertzGame():
         return 3 * self.width**2 * (self.width**2 + 1)
 
     def get_placement_action_shape(self):
+        # Return the shape of the placement actions as a tuple
         return self.board.get_placement_shape()
 
     def _is_game_over(self):
