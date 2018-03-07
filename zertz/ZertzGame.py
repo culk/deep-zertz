@@ -22,7 +22,8 @@ class ZertzGame():
             #   default: 37 rings (approximately 7x7 hex)
             self.initial_rings = rings
             self.t = t
-            self.board = Board(self.initial_rings, marbles, self.t)
+            self.marbles = marbles
+            self.board = Board(self.initial_rings, self.marbles, self.t)
 
             # The win conditions (amount of each marble needed)
             #   default:
@@ -36,6 +37,9 @@ class ZertzGame():
                                 {'w': 4}, {'g': 5}, {'b': 6}]
             else:
                 self.win_con = win_con
+
+    def reset_board():
+        self.board = Board(self.initial_rings, self.marbles, self.t)
 
     def get_cur_player_value(self):
         # Returns 1 if current player is player 0 and -1 if current player is player 1
@@ -55,7 +59,8 @@ class ZertzGame():
 
     def get_next_state(self, action, action_type, cur_state=None):
         # Input:
-        #   - An action which consists of a marble placement and a ring to remove or a capture
+        #   - action which is an index into the action matrix
+        #   - action_type which is 'PUT' for a placement action or 'CAP' for a capture action
         #   - Optional: cur_state = an arbitrary board state to use instead of the current game state
         # Returns the game state which is a tuple of:
         #   - 3D matrix of size L x H x W (layers, board height, board width)
@@ -71,19 +76,19 @@ class ZertzGame():
         return (board_state, player_value)
 
     def get_valid_actions(self, cur_state=None):
-        # Returns a filtering matrix that can be used to filter and renormalize the policy
-        # probability distribution. Capturing is compulsory so if there is a valid capture action
+        # Returns two filtering matrices that can be used to filter and renormalize the policy
+        # probability distributions. Capturing is compulsory so if there is a valid capture action
         # then the matrix of placement actions will all be False. Matrix shape depends on the action type.
-        #   - for placement actions, shape is 3 x width^2 x (width^2 + 1) and action_type is 'PUT'
-        #   - for capture actions, shape is 6 x width x width and action_type is 'CAP'
+        #   - for placement actions, shape is 3 x width^2 x (width^2 + 1)
+        #   - for capture actions, shape is 6 x width x width
         #     - capture actions only end the current players turn if there are no more chain captures
         if cur_state is None:
-            actions, action_type = self.board.get_valid_moves()
+            placement, capture = self.board.get_valid_moves()
         else:
             # Return the valid actions for an arbitrary marble supply, board and player
             temp_game = ZertzGame(clone=self, clone_state=cur_state)
-            actions, action_type = temp_game.get_valid_actions()
-        return actions, action_type
+            placement, capture = temp_game.get_valid_actions()
+        return (placement, capture)
 
     def get_capture_action_size(self):
         # Return the number of possible capture actions

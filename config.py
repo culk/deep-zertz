@@ -20,3 +20,6 @@ class Config(object):
 
     model = models[2]
     checkpoint_folder = 'checkpoint'
+
+    c_puct = 1
+    num_sims = 25000
