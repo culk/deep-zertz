@@ -7,8 +7,7 @@ class SelfPlay(object):
     def __init__(self, game, nnet):
         self.game = deepcopy(game)
         self.nnet = nnet
-        # Either let MCTS takes entire nnet object or just the function
-        self.mcts = MCTS(self.game, nnet.get_policy_fn(), Config.c_puct, Config.num_sim)
+        self.mcts = MCTS(self.game, nnet, Config.c_puct, Config.num_sim)
         self.temp_threshold = self.config.temp_threshold
 
     def generate_play_data(self):

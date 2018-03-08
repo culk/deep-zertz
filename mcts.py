@@ -65,7 +65,7 @@ class Node(object):
 
 
 class MCTS(object):
-    def __init__(self, game, policy_fn, c_puct, num_sim):
+    def __init__(self, game, nnet, c_puct, num_sim):
         """
         Arguments:
             policy_fn: is a function to that returns (p, v) tuple given a state. 
@@ -73,7 +73,7 @@ class MCTS(object):
             num_sim: number of simulations to run before selecting move
         """
         self.game = game
-        self.policy_fn = policy_fn
+        self.nnet = nnet
         self.c_puct = c_puct
         self.num_sim = num_sim
         self.root = Node(None, 1.0, 1)
@@ -95,7 +95,7 @@ class MCTS(object):
             board_state, _ = self.game.get_next_state(self, best_a, action_type, state)
             player_change = 1 if board_state[-1,0,0] == state[-1,0,0] else -1
 
-        p_placement, p_capture, v = self.policy_fn(board_state)
+        p_placement, p_capture, v = self.nnet.predict(board_state)
 
         winner = self.game.get_game_ended(board_state)
         if winner == 0:
