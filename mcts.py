@@ -79,7 +79,6 @@ class MCTS(object):
         path.
         Args:
             state is a tuple of (board_state, player)
-        NOTE: board should be a deep copy of original board
         """
 
         node = self.root
