@@ -65,7 +65,7 @@ class NNetWrapper(object):
         capture_pi_size = self.game.get_capture_action_shape()
 
         put_pi = np.reshape(put_pi, (-1, put_pi_size[0], put_pi_size[1], put_pi_size[2]))
-        capture_pi = np.reshape(capture_pi, (-1, capture_pi_size[0], capture_pi_size[1]))
+        capture_pi = np.reshape(capture_pi, (-1, capture_pi_size[0], capture_pi_size[1], capture_pi[2]))
 
         return put_pi, capture_pi, v
 
