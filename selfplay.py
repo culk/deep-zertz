@@ -16,10 +16,12 @@ class SelfPlay(object):
         episode_step = 0
         null_cap_pi = np.zeros_like(self.game.get_capture_action_shape())
         null_put_pi = np.zeros_like(self.game.get_placement_action_shape())
+        
+        board_state, player_value = self.game.get_current_state()
 
         while True:
             episode_step += 1
-            board_state, player_value = self.game.get_current_state()
+            print(episode_step)
             temp = int(episode_step < self.temp_threshold)
 
             action_type, actions, probs = self.mcts.get_action_prob(board_state, temp=temp)
@@ -27,12 +29,15 @@ class SelfPlay(object):
             examples.append([board_state, action_type, probs, player_value])
 
 
-            act = np.random.choice(actions, p=probs)
-            board_state, player_value = self.game.get_next_state(act, action_type, board_state)
+            action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
+            board_state, player_value = self.game.get_next_state(action, action_type)
+            print(action_type, action)
+            print(self.game.board.state[0])
 
             winner = self.game.get_game_ended(board_state)
 
             if winner != 0:
+                print('w')
                 new_examples = []
                 for e in examples:
                     if e[1] == 'PUT':
@@ -47,6 +52,7 @@ class SelfPlay(object):
                 return (np_board, np_pi_put, np_pi_cap, np_v, np_mask)
 
             if episode_step > 2000 and winner == 0:
+                print('bad')
                 return self.generate_play_data()
 
 

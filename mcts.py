@@ -65,6 +65,8 @@ class Node(object):
                 best_a = action
                 next_node = node
 
+        if best_a is None:
+            import pdb; pdb.set_trace()
         assert(self.action_type is not None)
         return self.action_type, best_a, next_node
 
@@ -106,22 +108,28 @@ class MCTS(object):
             board_state = next_board_state
         
         valid_placement, valid_capture = self.game.get_valid_actions(board_state)
-        if np.all(valid_placement == False):
-            action_filter = 0
-        else:
+        if np.any(valid_placement == True):
             action_filter = 1
+        else:
+            action_filter = 0
         p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
 
         winner = self.game.get_game_ended(board_state)
         if winner == 0:
             # No player has won
             valid_placement, valid_capture = self.game.get_valid_actions(board_state)
+            valid_placement = np.squeeze(valid_placement)
+            valid_capture = np.squeeze(valid_capture)
             if np.any(valid_placement == True):
                 p_placement = np.multiply(p_placement, valid_placement)
+                if np.sum(p_placement) == 0:
+                    p_placement = valid_placement.astype(np.float32)
                 p_placement /= np.sum(p_placement)
                 node.expand('PUT', p_placement, player_change)
             else:
                 p_capture = np.multiply(p_capture, valid_capture)
+                if np.sum(p_capture) == 0:
+                    p_capture = valid_capture.astype(np.float32)
                 p_capture /= np.sum(p_capture)
                 node.expand('CAP', p_capture, player_change)
         else:
@@ -142,7 +150,7 @@ class MCTS(object):
         if temp==0:
             probs = np.zeros_like(count)
             probs[np.argmax(count)] = 1
-            return actions, probs
+            return action_type, actions, probs
 
         counts = [x**(1./temp) for x in count]
         probs = [x/float(sum(counts)) for x in counts]

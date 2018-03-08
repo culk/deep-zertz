@@ -17,7 +17,9 @@ class Coach(object):
         for i in range(self.config.num_iters):
             # TODO: double check if examples have been shuffled
             self_play = SelfPlay(self.game, self.model)
+            print('.')
             examples = self_play.generate_play_data()
+            print('.')
 
             # Step 1. Keep a copy of the current model
             self.model.save_checkpoint(filename='temp.pth.tar')
