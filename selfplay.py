@@ -1,6 +1,7 @@
 from mtcs import MCTS
 from config import Config
 from copy import deepcopy
+import numpy as np
 
 class SelfPlay(object):
     def __init__(self, game, nnet):
@@ -8,7 +9,7 @@ class SelfPlay(object):
         self.nnet = nnet
         # Either let MCTS takes entire nnet object or just the function
         self.mcts = MCTS(game, nnet.get_policy_fn(), Config.c_puct, Config.num_sim)
-        self.temp_threshold = config.temp_threshold
+        self.temp_threshold = self.config.temp_threshold
 
     def generate_play_data(self):
         examples = []
@@ -30,19 +31,19 @@ class SelfPlay(object):
             act = np.random.choice(actions, p=probs)
             board_state, cur_player = self.game.get_next_state(act, action_type, (board_state, cur_player))
 
-            winner = self.game.get_game_ended((board_state, self.cur_player))
+            winner = self.game.get_game_ended((board_state, cur_player))
 
             if winner!=0:
-            	new_example = []
-            	for e in examples:
-            		if e[1] == 'PUT':
-            			new_example.append((e[0],e[2], null_cap_pi, winner*((-1)**(e[2]!=curPlayer))))
-            		else:
-            			new_example.append((e[0], null_put_pi, e[2], winner*((-1)**(e[2]!=curPlayer))))
-            	np_board = np.array([ne[0] for ne in new_examples])
-            	np_pi_put = np.array([ne[1] for ne in new_examples])
-            	np_pi_cap = np.array([ne[2] for ne in new_examples])
-            	np_v = np.array([ne[3] for ne in new_examples])
+                new_examples = []
+                for e in examples:
+                    if e[1] == 'PUT':
+                        new_examples.append((e[0],e[2], null_cap_pi, winner*((-1)**(e[2]!=cur_player))))
+                    else:
+                        new_examples.append((e[0], null_put_pi, e[2], winner*((-1)**(e[2]!=cur_player))))
+                np_board = np.array([ne[0] for ne in new_examples])
+                np_pi_put = np.array([ne[1] for ne in new_examples])
+                np_pi_cap = np.array([ne[2] for ne in new_examples])
+                np_v = np.array([ne[3] for ne in new_examples])
                 return (np_board, np_pi_put, np_pi_cap, np_v)
 
 

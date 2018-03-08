@@ -1,4 +1,4 @@
-
+import numpy as np
 
 class Node(object):
     """ A class that represents a node in MC search tree. 
@@ -123,7 +123,7 @@ class MCTS(object):
             probs[np.argmax(count)] = 1
             return actions, probs
 
-        counts = [x**(1./temp) for x in counts]
+        counts = [x**(1./temp) for x in count]
         probs = [x/float(sum(counts)) for x in counts]
          
         return action_type, actions, probs
