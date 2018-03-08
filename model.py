@@ -44,18 +44,20 @@ class NNetWrapper(object):
                 pi_put size = (num_examples, put_pi_size[0] * put_pi_size[1] * put_pi_size[2])
                 pi_capture size = (num_examples, capture_pi_size[0] * capture_pi_size[1])
                 v size = (num_examples, 1)
+                is_put = (num_examples, 1) binary array indicating if capture is valid for each example
         :return:
         '''
-        input_states, target_put_pis, target_capture_pis, target_vs = examples
+        input_states, target_put_pis, target_capture_pis, target_vs, is_put = examples
+        # TODO: make sure that is capture
 
         input_states = np.asarray(input_states)
         target_put_pis = np.asarray(target_put_pis)
         target_capture_pis = np.asarray(target_capture_pis)
         target_vs = np.asarray(target_vs)
+        is_capture = np.asarray(is_put)
 
-        self.nnet.model.fit(x=input_states, y=[target_put_pis, target_capture_pis, target_vs],
-                            batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
-
+        self.nnet.model.fit(x=[input_states, is_put], y=[target_put_pis, target_capture_pis, target_vs],
+                                batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
     def predict(self, states):
         put_pi, capture_pi, v = self.nnet.model.predict(states)
 
