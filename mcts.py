@@ -96,18 +96,15 @@ class MCTS(object):
             # No player has won
             valid_placement, valid_capture = self.game.get_valid_actions(state)
             if valid_placement is not None:
-                p_placement = np.multiply(p_placement * valid_placement)
+                p_placement = np.multiply(p_placement, valid_placement)
                 p_placement /= np.sum(p_placement)
                 node.expand('PUT', p_placement)
             else:
-                p_capture = np.multiply(p_capture * valid_capture)
+                p_capture = np.multiply(p_capture, valid_capture)
                 p_capture /= np.sum(p_capture)
                 node.expand('CAP', p_capture)
         else:
-            if state[2] == winner:
-                v = 1
-            else:
-                v = -1
+            v = winner
 
         node.recurse_update(-v)
 
