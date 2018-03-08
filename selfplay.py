@@ -14,8 +14,8 @@ class SelfPlay(object):
         examples = []
         self.game.reset_board()     
         episode_step = 0
-        null_cap_pi = np.zeros_like(self.game.get_capture_action_shape())
-        null_put_pi = np.zeros_like(self.game.get_placement_action_shape())
+        null_cap_pi = np.zeros(shape=self.game.get_capture_action_shape())
+        null_put_pi = np.zeros(shape=self.game.get_placement_action_shape())
         
         board_state, player_value = self.game.get_current_state()
 
@@ -27,7 +27,6 @@ class SelfPlay(object):
             action_type, actions, probs = self.mcts.get_action_prob(board_state, temp=temp)
             # TODO: make sure exmples format compatible with training input format
             examples.append([board_state, action_type, probs, player_value])
-
 
             action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
             board_state, player_value = self.game.get_next_state(action, action_type)

@@ -48,6 +48,7 @@ class NNetWrapper(object):
         :return:
         '''
         input_states, target_put_pis, target_capture_pis, target_vs, is_put = examples
+        import pdb; pdb.set_trace()
         # TODO: make sure that is capture
 
         input_states = np.asarray(input_states)
@@ -56,8 +57,11 @@ class NNetWrapper(object):
         target_vs = np.asarray(target_vs)
         is_put = np.asarray(is_put)
 
-        self.nnet.model.fit(x={'inputs':input_states, 'aux_input':is_put}, y=[target_put_pis, target_capture_pis, target_vs],
-                                batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
+        self.nnet.model.fit(
+                x={'inputs':input_states, 'aux_input':is_put},
+                y=[target_put_pis, target_capture_pis, target_vs],
+                batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
+
     def predict(self, states, is_put):
         put_pi, capture_pi, v = self.nnet.model.predict([np.expand_dims(states, axis=0), np.array([is_put])])
 
@@ -68,7 +72,6 @@ class NNetWrapper(object):
         capture_pi = np.reshape(capture_pi, (-1, capture_pi_size[0], capture_pi_size[1], capture_pi_size[2]))
 
         return put_pi, capture_pi, v
-
 
     def save_checkpoint(self, filename='checkpoint.pth.tar'):
         folder = self.config.checkpoint_folder
