@@ -48,17 +48,17 @@ class Arena(object):
         """
         Returns 1 if player1 won, -1 if player2 won.
         """
-        game.reset_board()
+        self.game.reset_board()
 
-        while self.game.get_game_ended()==0:
-            state = self.game.get_current_state()
-            if state[1] == 1: # if cur_player is player1
+        while self.game.get_game_ended() == 0:
+            state, player_value = self.game.get_current_state()
+            if player_value == 1: # if cur_player is player1
                 action_type, actions, probs = self.player1.get_action_prob(state, temp=0)
-            else:
+            else: # plaver_value == -1
                 action_type, actions, probs = self.player2.get_action_prob(state, temp=0)
 
             act = action[np.argmax(probs)]
-            _ = self.game.get_next_state(action, action_type)
+            self.game.get_next_state(action, action_type)
 
         return self.game.get_game_ended()
 

@@ -115,7 +115,7 @@ class MCTS(object):
     def get_action_prob(self, state, temp):
 
         for _ in range(self.num_sim):
-            state_copy = np.deep_copy(state)
+            state_copy = np.copy(state)
             simulate(state_copy)
 
         action_type = self.root.action_type
