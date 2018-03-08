@@ -24,5 +24,7 @@ class Config(object):
     arena_threshold = 0.55
     num_iters = 10
 
+    customized_loss = False
+
     c_puct = 1
     num_sims = 25000

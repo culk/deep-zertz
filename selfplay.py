@@ -14,6 +14,8 @@ class SelfPlay(object):
         examples = []
         self.game.reset_board()     
         episode_step = 0
+        null_cap_pi = np.zeros_like(self.game.get_capture_action_shape())
+        null_put_pi = np.zeros_like(self.game.get_placement_action_shape())
 
         while True:
             episode_step += 1
@@ -31,7 +33,17 @@ class SelfPlay(object):
             winner = self.game.get_game_ended((board_state, self.cur_player))
 
             if winner!=0:
-                return [(e[0],e[1],winner*((-1)**(e[2]!=curPlayer))) for e in examples]
+            	new_example = []
+            	for e in examples:
+            		if e[1] == 'PUT':
+            			new_example.append((e[0],e[2], null_cap_pi, winner*((-1)**(e[2]!=curPlayer))))
+            		else:
+            			new_example.append((e[0], null_put_pi, e[2], winner*((-1)**(e[2]!=curPlayer))))
+            	np_board = np.array([ne[0] for ne in new_examples])
+            	np_pi_put = np.array([ne[1] for ne in new_examples])
+            	np_pi_cap = np.array([ne[2] for ne in new_examples])
+            	np_v = np.array([ne[3] for ne in new_examples])
+                return (np_board, np_pi_put, np_pi_cap, np_v)
 
 
 
