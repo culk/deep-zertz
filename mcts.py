@@ -121,7 +121,7 @@ class MCTS(object):
 
         for _ in range(self.num_sim):
             state_copy = np.copy(state)
-            simulate(state_copy)
+            self.simulate(state_copy)
 
         action_type = self.root.action_type
         Nas = [(action, node.N) for action, node in self.root.child.items()]
