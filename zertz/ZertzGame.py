@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 from .ZertzLogic import Board
 
@@ -13,7 +14,7 @@ class ZertzGame():
             # have the same board state as clone_state
             self.initial_rings = clone.initial_rings
             self.t = clone.t
-            self.win_con = clone.win_con
+            self.win_con = copy.copy(clone.win_con)
             self.board = Board(clone=clone.board)
             self.board.state = np.copy(clone_state)
             assert clone.board.state.shape[0] == clone_state.shape[0]
@@ -37,6 +38,9 @@ class ZertzGame():
                                 {'w': 4}, {'g': 5}, {'b': 6}]
             else:
                 self.win_con = win_con
+
+    def __deepcopy__(self, memo):
+        return Game(clone=self, clone_state=self.board.state)
 
     def reset_board():
         self.board = Board(self.initial_rings, self.marbles, self.t)
