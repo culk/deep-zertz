@@ -40,7 +40,7 @@ class ZertzGame():
                 self.win_con = win_con
 
     def __deepcopy__(self, memo):
-        return Game(clone=self, clone_state=self.board.state)
+        return ZertzGame(clone=self, clone_state=self.board.state)
 
     def reset_board():
         self.board = Board(self.initial_rings, self.marbles, self.t)
@@ -104,7 +104,7 @@ class ZertzGame():
 
     def get_placement_action_size(self):
         # Return the number of possible placement actions
-        return 3 * self.width**2 * (self.width**2 + 1)
+        return 3 * self.board.width**2 * (self.board.width**2 + 1)
 
     def get_placement_action_shape(self):
         # Return the shape of the placement actions as a tuple
