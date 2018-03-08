@@ -53,7 +53,8 @@ class LinearModel(object):
         self.pi_capture = Dense(self.capture_action_size, activation='softmax', name='pi_capture')(hidden)
         self.v = Dense(1, activation='tanh', name='v')(hidden)
 
-
+        if self.config.custom_loss:
+            pass
 
         self.model = Model(inputs=[inputs, aux_input], outputs=[self.pi_put, self.pi_capture, self.v])
 
