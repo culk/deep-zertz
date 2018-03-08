@@ -282,6 +282,7 @@ class Board():
 
         # Give the captured marble to the current player and remove it from the board
         y, x = cap_index
+
         assert np.sum(self.state[1:4, y, x]) == 1
         captured_type = self._get_marble_type_at(cap_index)
         supply_layer = self._get_cur_player_supply_layer(captured_type)

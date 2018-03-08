@@ -25,7 +25,7 @@ class Config(object):
     temp_threshold = 15
     num_iters = 10
 
-    custom_loss = False
+    custom_loss = True
 
     c_puct = 1
     num_sims = 5

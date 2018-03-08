@@ -54,9 +54,15 @@ class LinearModel(object):
         self.pi_capture = Dense(self.capture_action_size, activation='softmax', name='pi_capture')(hidden)
         self.v = Dense(1, activation='tanh', name='v')(hidden)
 
+        def mask_put(pi_put):
+            return tf.multiply(self.pi_put, aux_input)
+
+        def mask_capture(pi_capture):
+            return tf.multiply(self.pi_capture, tf.subtract(1.0, aux_input))
+
         if self.config.custom_loss:
-            self.pi_put = tf.multiply(self.pi_put, aux_input)
-            self.pi_capture = tf.multiply(self.pi_capture, tf.subtract(1, aux_input))
+            self.pi_put = Lambda(lambda x: mask_put(x))(self.pi_put)
+            self.pi_capture = Lambda(lambda x: mask_capture(x))(self.pi_capture)
 
         self.model = Model(inputs=[inputs, aux_input],
                            outputs=[self.pi_put, self.pi_capture, self.v])
@@ -88,7 +94,8 @@ class DenseModel(object):
         self.capture_action_size = game.get_capture_action_size()
         self.config = config
 
-        inputs = Input(shape=(self.state_depth, self.board_x, self.board_y))
+        inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
+        aux_input = Input(shape=(1,), name="aux_input")
         hidden = Flatten()(inputs)
 
         for i in range(self.config.num_layers):
@@ -97,6 +104,16 @@ class DenseModel(object):
         self.pi_put = Dense(self.put_action_size, activation='softmax', name='pi_put')(hidden)
         self.pi_capture = Dense(self.capture_action_size, activation='softmax', name='pi_capture')(hidden)
         self.v = Dense(1, activation='tanh', name='v')(hidden)
+
+        def mask_put(pi_put):
+            return tf.multiply(self.pi_put, aux_input)
+
+        def mask_capture(pi_capture):
+            return tf.multiply(self.pi_capture, tf.subtract(1.0, aux_input))
+
+        if self.config.custom_loss:
+            self.pi_put = Lambda(lambda x: mask_put(x))(self.pi_put)
+            self.pi_capture = Lambda(lambda x: mask_capture(x))(self.pi_capture)
 
         self.model = Model(inputs=inputs, outputs=[self.pi_put, self.pi_capture, self.v])
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
@@ -126,7 +143,8 @@ class ConvModel(object):
         self.capture_action_size = game.get_capture_action_size()
         self.config = config
 
-        inputs = Input(shape=(self.state_depth, self.board_x, self.board_y))
+        inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
+        aux_input = Input(shape=(1,), name="aux_input")
         hidden = inputs
 
         for i in range(self.config.num_layers):
@@ -141,6 +159,16 @@ class ConvModel(object):
         self.pi_put = Dense(self.put_action_size, activation='softmax', name='pi_put')(hidden)
         self.pi_capture = Dense(self.capture_action_size, activation='softmax', name='pi_capture')(hidden)
         self.v = Dense(1, activation='tanh', name='v')(hidden)
+
+        def mask_put(pi_put):
+            return tf.multiply(self.pi_put, aux_input)
+
+        def mask_capture(pi_capture):
+            return tf.multiply(self.pi_capture, tf.subtract(1.0, aux_input))
+
+        if self.config.custom_loss:
+            self.pi_put = Lambda(lambda x: mask_put(x))(self.pi_put)
+            self.pi_capture = Lambda(lambda x: mask_capture(x))(self.pi_capture)
 
         self.model = Model(inputs=inputs, outputs=[self.pi_put, self.pi_capture, self.v])
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
