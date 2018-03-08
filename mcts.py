@@ -78,7 +78,7 @@ class MCTS(object):
         self.num_sim = num_sim
         self.root = Node(None, 1.0, 1)
 
-    def simulate(self, state):
+    def simulate(self, board_state):
         """
         Perform one simulation of MCTS. Recursively called until a leaf is found.
         Then uses policy_fn to make prediction of (p,v). This value is propogated up the 
@@ -92,16 +92,22 @@ class MCTS(object):
             if node.is_leaf():
                 break
             action_type, best_a = node.get_action(self.c_puct)
-            board_state, _ = self.game.get_next_state(self, best_a, action_type, state)
-            player_change = 1 if board_state[-1,0,0] == state[-1,0,0] else -1
-
-        p_placement, p_capture, v = self.nnet.predict(board_state)
+            next_board_state, _ = self.game.get_next_state(self, best_a, action_type, board_state)
+            player_change = 1 if next_board_state[-1, 0, 0] == board_state[-1, 0, 0] else -1
+            board_state = next_board_state
+        
+        valid_placement, valid_capture = self.game.get_valid_actions(board_state)
+        if np.all(valid_placement == False):
+            action_filter = 0
+        else:
+            action_filter = 1
+        p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
 
         winner = self.game.get_game_ended(board_state)
         if winner == 0:
             # No player has won
             valid_placement, valid_capture = self.game.get_valid_actions(board_state)
-            if valid_placement is not None:
+            if np.any(valid_placement == True):
                 p_placement = np.multiply(p_placement, valid_placement)
                 p_placement /= np.sum(p_placement)
                 node.expand('PUT', p_placement, player_change)

@@ -58,7 +58,7 @@ class LinearModel(object):
             self.pi_put = tf.multiply(self.pi_put, aux_input)
             self.pi_capture = tf.multiply(self.pi_capture, tf.subtract(1, aux_input))
 
-        self.model = Model(inputs={'inputs':inputs, 'aux_input':aux_input},
+        self.model = Model(inputs=[inputs, aux_input],
                            outputs=[self.pi_put, self.pi_capture, self.v])
 
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
