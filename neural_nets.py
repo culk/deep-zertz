@@ -20,6 +20,19 @@ def combined_loss(args):
 custom_loss = Lambda(combined_loss, output_shape=(1,), name='combined_loss')([inputs, self.pi_put, self.pi_capture, self.v])
 '''
 
+def customized_loss(is_put, pi_put, pi_cap, v):
+    '''
+    Customized loss to make sure invalid actions won't update the network
+    :param is_put: bool. If False then forced capture
+    :param pi_put: tensor with shape (num_examples, put_pi_size[0] * put_pi_size[1] * put_pi_size[2])
+    :param pi_cap: tensor with shape (num_examples, capture_pi_size[0] * capture_pi_size[1])
+    :param v: tensor with shape (num_examples, )
+    :return: a loss function
+    '''
+    # TODO: is it okay to pass in tensor?
+    pass
+
+
 class LinearModel(object):
     '''
     A linear model takes in a state and estimates the corresponding pi_put, pi_capture and v

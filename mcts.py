@@ -1,4 +1,4 @@
-
+import numpy as np
 
 class Node(object):
     """ A class that represents a node in MC search tree. 
@@ -113,7 +113,7 @@ class MCTS(object):
 
         for _ in range(self.num_sim):
             state_copy = np.deep_copy(state)
-            simulate(state_copy)
+            self.simulate(state_copy)
 
         action_type = self.root.action_type
         Nas = [(action, node.N) for action, node in self.root.child.items()]
@@ -123,7 +123,7 @@ class MCTS(object):
             probs[np.argmax(count)] = 1
             return actions, probs
 
-        counts = [x**(1./temp) for x in counts]
+        counts = [x**(1./temp) for x in count]
         probs = [x/float(sum(counts)) for x in counts]
          
         return action_type, actions, probs
