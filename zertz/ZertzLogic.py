@@ -221,7 +221,7 @@ class Board():
             self.state[supply_layer] -= 1
         else:
             # If supply is empty then take the marble from those the player has captured
-            supply_layer = self._get_cur_player_layer(marble_type)
+            supply_layer = self._get_cur_player_supply_layer(marble_type)
             self.state[supply_layer] -= 1
 
         # Remove the ring from the board

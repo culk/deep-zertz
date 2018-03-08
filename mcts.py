@@ -21,7 +21,7 @@ class Node(object):
         Arguments:
         leaf_value -- the value of subtree evaluation from the current player's perspective.        
         """
-        self.Q = (self._Q * self.N +predicted_v)/ (self.N +1)
+        self.Q = (self.Q * self.N + predicted_v) / (self.N + 1)
         self.N += 1
 
     def recurse_update(self, predicted_v):
@@ -42,9 +42,15 @@ class Node(object):
                             1 if player remains the same and -1 if player changes
         """
         self.action_type = action_type
-        for action, prob in predicted_p:
-            if action not in self.child:
-                self.child[action] = Node(self, prob, player_change*self.cur_player)
+        predicted_p = predicted_p.squeeze()
+        z, y, x = predicted_p.shape
+        for i in xrange(z):
+            for j in xrange(y):
+                for k in xrange(x):
+                    action = (i, j, k)
+                    prob = predicted_p[action]
+                    if action not in self.child:
+                        self.child[action] = Node(self, prob, player_change*self.cur_player)
 
     def get_action(self, c_puct):
         """Gets best action based on current estimate of Q and U
@@ -88,11 +94,12 @@ class MCTS(object):
         """
 
         node = self.root
+        player_change = 1
         while True:
             if node.is_leaf():
                 break
             action_type, best_a = node.get_action(self.c_puct)
-            next_board_state, _ = self.game.get_next_state(self, best_a, action_type, board_state)
+            next_board_state, _ = self.game.get_next_state(best_a, action_type, board_state)
             player_change = 1 if next_board_state[-1, 0, 0] == board_state[-1, 0, 0] else -1
             board_state = next_board_state
         
