@@ -2,10 +2,9 @@
 neural_nets.py contains various network structure, including linear model, dense model, conv model and residual net
 model
 '''
-from keras.layers import Input, Reshape, Dense, Conv2D, BatchNormalization, Activation, Flatten, Dropout
+from keras.layers import Input, Reshape, Dense, Conv2D, BatchNormalization, Activation, Flatten, Dropout, Lambda
 from keras.models import Model
 from keras.optimizers import Adam
-import numpy as np
 
 '''
 # Possible alternate loss function

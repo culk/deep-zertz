@@ -17,7 +17,7 @@ class Coach(object):
         '''
         Takes a tuple of examples and update the neural networks
         :param examples: (states, put_pi, capture_pi, v)
-                state size=(num_examples, board_x, board_y, state_depth)
+                state size=(num_examples, state_depth，board_x, board_y)
                 pi_put size = (num_examples, put_pi_size[0] * put_pi_size[1] * put_pi_size[2])
                 pi_capture size = (num_examples, capture_pi_size[0] * capture_pi_size[1])
                 v size = (num_examples, 1)
