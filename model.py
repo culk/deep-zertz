@@ -50,11 +50,11 @@ class NNetWrapper(object):
         input_states, target_put_pis, target_capture_pis, target_vs, is_put = examples
         # TODO: make sure that is capture
 
-        # input_states = np.asarray(input_states)
-        # target_put_pis = np.asarray(target_put_pis)
-        # target_capture_pis = np.asarray(target_capture_pis)
-        # target_vs = np.asarray(target_vs)
-        # is_put = np.asarray(is_put)
+        input_states = np.asarray(input_states)
+        target_put_pis = np.asarray(target_put_pis)
+        target_capture_pis = np.asarray(target_capture_pis)
+        target_vs = np.asarray(target_vs)
+        is_put = np.asarray(is_put)
 
         self.nnet.model.fit(x={'inputs':input_states, 'aux_input':is_put}, y=[target_put_pis, target_capture_pis, target_vs],
                                 batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
