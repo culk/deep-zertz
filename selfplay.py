@@ -8,7 +8,7 @@ class SelfPlay(object):
         self.game = deepcopy(game)
         self.nnet = nnet
         # Either let MCTS takes entire nnet object or just the function
-        self.mcts = MCTS(game, nnet.get_policy_fn(), Config.c_puct, Config.num_sim)
+        self.mcts = MCTS(self.game, nnet.get_policy_fn(), Config.c_puct, Config.num_sim)
         self.temp_threshold = self.config.temp_threshold
 
     def generate_play_data(self):
@@ -20,26 +20,26 @@ class SelfPlay(object):
 
         while True:
             episode_step += 1
-            board_state, cur_player = self.game.get_current_state()
+            board_state, player_value = self.game.get_current_state()
             temp = int(episode_step < self.temp_threshold)
 
-            action_type, actions, probs = self.mcts.get_action_prob((board_state, cur_player), temp=temp)
+            action_type, actions, probs = self.mcts.get_action_prob(board_state, temp=temp)
             # TODO: make sure exmples format compatible with training input format
-            examples.append([board_state, action_type, probs, cur_player])
+            examples.append([board_state, action_type, probs, player_value])
 
 
             act = np.random.choice(actions, p=probs)
-            board_state, cur_player = self.game.get_next_state(act, action_type, (board_state, cur_player))
+            board_state, player_value = self.game.get_next_state(act, action_type, board_state)
 
-            winner = self.game.get_game_ended((board_state, cur_player))
+            winner = self.game.get_game_ended(board_state)
 
-            if winner!=0:
+            if winner != 0:
                 new_examples = []
                 for e in examples:
                     if e[1] == 'PUT':
-                        new_examples.append((e[0],e[2], null_cap_pi, winner*((-1)**(e[2]!=cur_player))))
+                        new_examples.append((e[0],e[2], null_cap_pi, winner*((-1)**(e[2]!=player_value))))
                     else:
-                        new_examples.append((e[0], null_put_pi, e[2], winner*((-1)**(e[2]!=cur_player))))
+                        new_examples.append((e[0], null_put_pi, e[2], winner*((-1)**(e[2]!=player_value))))
                 np_board = np.array([ne[0] for ne in new_examples])
                 np_pi_put = np.array([ne[1] for ne in new_examples])
                 np_pi_cap = np.array([ne[2] for ne in new_examples])
