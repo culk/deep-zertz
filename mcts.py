@@ -57,14 +57,16 @@ class Node(object):
         """
         max_u = float('-inf')
         best_a = None
+        next_node = None
         for action, node in self.child.items():
             u = node.Q + c_puct * node.P * np.sqrt(self.N) / (1 + node.N)
             if u > max_u:
                 max_u = u
                 best_a = action
+                next_node = node
 
         assert(self.action_type is not None)
-        return self.action_type, best_a
+        return self.action_type, best_a, next_node
 
     def is_leaf(self):
         return self.child == {}
@@ -98,7 +100,7 @@ class MCTS(object):
         while True:
             if node.is_leaf():
                 break
-            action_type, best_a = node.get_action(self.c_puct)
+            action_type, best_a, node = node.get_action(self.c_puct)
             next_board_state, _ = self.game.get_next_state(best_a, action_type, board_state)
             player_change = 1 if next_board_state[-1, 0, 0] == board_state[-1, 0, 0] else -1
             board_state = next_board_state
