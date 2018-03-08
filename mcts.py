@@ -85,7 +85,6 @@ class MCTS(object):
         path.
         Args:
             state is a tuple of (board_state, player)
-        NOTE: board should be a deep copy of original board
         """
 
         node = self.root
@@ -119,8 +118,8 @@ class MCTS(object):
     def get_action_prob(self, state, temp):
 
         for _ in range(self.num_sim):
-            state_copy = np.deep_copy(state)
-            self.simulate(state_copy)
+            state_copy = np.copy(state)
+            simulate(state_copy)
 
         action_type = self.root.action_type
         Nas = [(action, node.N) for action, node in self.root.child.items()]
