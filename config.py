@@ -22,6 +22,7 @@ class Config(object):
     checkpoint_folder = 'checkpoints'
     arena_games = 40
     arena_threshold = 0.55
+    temp_threshold = 15
     num_iters = 10
 
     custom_loss = False

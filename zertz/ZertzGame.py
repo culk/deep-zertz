@@ -14,6 +14,7 @@ class ZertzGame():
             # have the same board state as clone_state
             self.initial_rings = clone.initial_rings
             self.t = clone.t
+            self.marbles = copy.copy(clone.marbles)
             self.win_con = copy.copy(clone.win_con)
             self.board = Board(clone=clone.board)
             self.board.state = np.copy(clone_state)
@@ -42,7 +43,7 @@ class ZertzGame():
     def __deepcopy__(self, memo):
         return ZertzGame(clone=self, clone_state=self.board.state)
 
-    def reset_board():
+    def reset_board(self):
         self.board = Board(self.initial_rings, self.marbles, self.t)
 
     def get_cur_player_value(self):
