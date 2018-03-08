@@ -45,8 +45,8 @@ class LinearModel(object):
         self.capture_action_size = game.get_capture_action_size()
         self.config = config
 
-        inputs = Input(shape=(self.state_depth, self.board_x, self.board_y))
-        aux_input = Input(shape=(1,))
+        inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
+        aux_input = Input(shape=(1,), name="aux_input")
 
         hidden = Flatten()(inputs)
         hidden = Dense(self.config.hidden_size, activation='linear')(hidden)
@@ -58,7 +58,8 @@ class LinearModel(object):
             self.pi_put = tf.multiply(self.pi_put, aux_input)
             self.pi_capture = tf.multiply(self.pi_capture, tf.subtract(1, aux_input))
 
-        self.model = Model(inputs=[inputs, aux_input], outputs=[self.pi_put, self.pi_capture, self.v])
+        self.model = Model(inputs={'inputs':inputs, 'aux_input':aux_input},
+                           outputs=[self.pi_put, self.pi_capture, self.v])
 
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
                            optimizer=Adam(self.config.lr))

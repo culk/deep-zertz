@@ -54,12 +54,12 @@ class NNetWrapper(object):
         target_put_pis = np.asarray(target_put_pis)
         target_capture_pis = np.asarray(target_capture_pis)
         target_vs = np.asarray(target_vs)
-        is_capture = np.asarray(is_put)
+        is_put = np.asarray(is_put)
 
-        self.nnet.model.fit(x=[input_states, is_put], y=[target_put_pis, target_capture_pis, target_vs],
+        self.nnet.model.fit(x={'inputs':input_states, 'aux_input':is_put}, y=[target_put_pis, target_capture_pis, target_vs],
                                 batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
-    def predict(self, states):
-        put_pi, capture_pi, v = self.nnet.model.predict(states)
+    def predict(self, states, is_put):
+        put_pi, capture_pi, v = self.nnet.model.predict({'inputs':states, 'aux_input':is_put})
 
         put_pi_size = self.game.get_placement_action_size()
         capture_pi_size = self.game.get_capture_action_size()
