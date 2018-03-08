@@ -7,12 +7,13 @@ class Node(object):
         Q: the mean value of this staet
         P: the prior probability of selecting this node (ie. taking this action)
     """
-    def __init__(self, parent, P):
+    def __init__(self, parent, P, cur_player):
         self.N = 0
         self.Q = 0
         self.P = P
         self.child = {}
         self.action_type = None # will be assigned upon expanding
+        self.cur_player = cur_player
         self.parent = parent
 
     def update(self, predicted_v):
@@ -28,17 +29,22 @@ class Node(object):
         """
         # If it is not root, this node's parent should be updated first.
         if self.parent:
-            self.parent.recurse_update(-predicted_v)
+            if self.cur_player == self.parent.cur_player:
+                self.parent.recurse_update(predicted_v)
+            else:
+                self.parent.recurse_update(-predicted_v)
         self.update(predicted_v)
 
-    def expand(self, action_type, predicted_p):
+    def expand(self, action_type, predicted_p, player_change):
         """Expand the search tree by attaching child nodes to current state
-        NOTE: assuming predicted_p is a list of tuple with action and coresponding prob
+        Args:
+            player_change: an int to represent either the child nodes results in player change
+                            1 if player remains the same and -1 if player changes
         """
         self.action_type = action_type
         for action, prob in predicted_p:
             if action not in self.child:
-                self.child[action] = Node(self, prob)
+                self.child[action] = Node(self, prob, player_change*self.cur_player)
 
     def get_action(self, c_puct):
         """Gets best action based on current estimate of Q and U
@@ -70,7 +76,7 @@ class MCTS(object):
         self.policy_fn = policy_fn
         self.c_puct = c_puct
         self.num_sim = num_sim
-        self.root = Node(None, 1.0)
+        self.root = Node(None, 1.0, 1)
 
     def simulate(self, state):
         """
@@ -86,22 +92,23 @@ class MCTS(object):
             if node.is_leaf():
                 break
             action_type, best_a = node.get_action(self.c_puct)
-            state = self.game.get_next_state(self, best_a, action_type, state)
+            board_state, _ = self.game.get_next_state(self, best_a, action_type, state)
+            player_change = 1 if board_state[-1,0,0] == state[-1,0,0] else -1
 
-        p_placement, p_capture, v = self.policy_fn(state)
+        p_placement, p_capture, v = self.policy_fn(board_state)
 
-        winner = self.game.get_game_ended(state)
+        winner = self.game.get_game_ended(board_state)
         if winner == 0:
             # No player has won
-            valid_placement, valid_capture = self.game.get_valid_actions(state)
+            valid_placement, valid_capture = self.game.get_valid_actions(board_state)
             if valid_placement is not None:
                 p_placement = np.multiply(p_placement, valid_placement)
                 p_placement /= np.sum(p_placement)
-                node.expand('PUT', p_placement)
+                node.expand('PUT', p_placement, player_change)
             else:
                 p_capture = np.multiply(p_capture, valid_capture)
                 p_capture /= np.sum(p_capture)
-                node.expand('CAP', p_capture)
+                node.expand('CAP', p_capture, player_change)
         else:
             v = winner
 
