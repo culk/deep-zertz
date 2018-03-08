@@ -1,4 +1,4 @@
-from mtcs import MCTS
+from mcts import MCTS
 from config import Config
 from copy import deepcopy
 import numpy as np
