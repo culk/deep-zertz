@@ -46,6 +46,8 @@ class SelfPlay(object):
                 np_mask = np.array([ne[4] for ne in new_examples])
                 return (np_board, np_pi_put, np_pi_cap, np_v, np_mask)
 
+            if episode_step > 2000 and winner == 0:
+                return self.generate_play_data()
 
 
 class Arena(object):
