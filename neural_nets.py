@@ -5,6 +5,7 @@ model
 from keras.layers import Input, Reshape, Dense, Conv2D, BatchNormalization, Activation, Flatten, Dropout, Lambda
 from keras.models import Model
 from keras.optimizers import Adam
+import tensorflow as tf
 
 '''
 # Possible alternate loss function
@@ -54,7 +55,8 @@ class LinearModel(object):
         self.v = Dense(1, activation='tanh', name='v')(hidden)
 
         if self.config.custom_loss:
-            pass
+            self.pi_put = tf.multiply(self.pi_put, aux_input)
+            self.pi_capture = tf.multiply(self.pi_capture, tf.subtract(1, aux_input))
 
         self.model = Model(inputs=[inputs, aux_input], outputs=[self.pi_put, self.pi_capture, self.v])
 
