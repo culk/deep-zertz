@@ -18,7 +18,7 @@ class Config(object):
     kernel_size = 2
     dropout = 0.1
 
-    model = models[0]
+    model = models[2]
     checkpoint_folder = 'checkpoints'
     arena_games = 40
     arena_threshold = 0.55

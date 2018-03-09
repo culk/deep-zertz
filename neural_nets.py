@@ -90,7 +90,8 @@ class DenseModel(object):
         self.config = config
 
         inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
-        aux_input = Input(shape=(1,), name="aux_input")
+        put_aux = Input(shape=(self.put_action_size,), name="put_aux")
+        capture_aux = Input(shape=(self.capture_action_size,), name='capture_aux')
         hidden = Flatten()(inputs)
 
         for i in range(self.config.num_layers):
@@ -100,17 +101,11 @@ class DenseModel(object):
         self.pi_capture = Dense(self.capture_action_size, activation='softmax', name='pi_capture')(hidden)
         self.v = Dense(1, activation='tanh', name='v')(hidden)
 
-        def mask_put(pi_put):
-            return tf.multiply(self.pi_put, aux_input)
-
-        def mask_capture(pi_capture):
-            return tf.multiply(self.pi_capture, tf.subtract(1.0, aux_input))
-
         if self.config.custom_loss:
-            self.pi_put = Lambda(lambda x: mask_put(x))(self.pi_put)
-            self.pi_capture = Lambda(lambda x: mask_capture(x))(self.pi_capture)
+            self.pi_put = Multiply()([self.pi_put, put_aux])
+            self.pi_capture = Multiply()([self.pi_capture, capture_aux])
 
-        self.model = Model(inputs=[inputs, aux_input], outputs=[self.pi_put, self.pi_capture, self.v])
+        self.model = Model(inputs=[inputs, put_aux, capture_aux], outputs=[self.pi_put, self.pi_capture, self.v])
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
                            optimizer=Adam(self.config.lr))
 
@@ -139,7 +134,9 @@ class ConvModel(object):
         self.config = config
 
         inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
-        aux_input = Input(shape=(1,), name="aux_input")
+        put_aux = Input(shape=(self.put_action_size,), name="put_aux")
+        capture_aux = Input(shape=(self.capture_action_size,), name='capture_aux')
+
         hidden = inputs
 
         for i in range(self.config.num_layers):
@@ -155,16 +152,9 @@ class ConvModel(object):
         self.pi_capture = Dense(self.capture_action_size, activation='softmax', name='pi_capture')(hidden)
         self.v = Dense(1, activation='tanh', name='v')(hidden)
 
-        def mask_put(pi_put):
-            return tf.multiply(self.pi_put, aux_input)
-
-        def mask_capture(pi_capture):
-            return tf.multiply(self.pi_capture, tf.subtract(1.0, aux_input))
-
         if self.config.custom_loss:
-            self.pi_put = Lambda(lambda x: mask_put(x))(self.pi_put)
-            self.pi_capture = Lambda(lambda x: mask_capture(x))(self.pi_capture)
-
-        self.model = Model(inputs=[inputs, aux_input], outputs=[self.pi_put, self.pi_capture, self.v])
+            self.pi_put = Multiply()([self.pi_put, put_aux])
+            self.pi_capture = Multiply()([self.pi_capture, capture_aux])
+        self.model = Model(inputs=[inputs, put_aux, capture_aux], outputs=[self.pi_put, self.pi_capture, self.v])
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
                            optimizer=Adam(self.config.lr))
