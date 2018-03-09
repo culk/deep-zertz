@@ -3,6 +3,7 @@ This script optimizes the neural network via retraining
 '''
 from mcts import MCTS
 from selfplay import SelfPlay, Arena
+import numpy as np
 
 class Coach(object):
     def __init__(self, game, model, config):
@@ -42,7 +43,9 @@ class Coach(object):
                 self.model.load_checkpoint(filename='temp.pth.tar')
 
     def shuffle_examples(self, examples):
-        # TODO: implement
+        order = np.random.permutation(len(examples[0]))
+        for array in examples:
+            array = array[order, ...]
         return examples
 
     def getCheckpointFile(self, iteration):

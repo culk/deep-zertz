@@ -28,4 +28,4 @@ class Config(object):
     custom_loss = False
 
     c_puct = 1
-    num_sims = 5
+    num_sims = 100
