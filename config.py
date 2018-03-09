@@ -14,18 +14,19 @@ class Config(object):
     epochs = 10
 
     num_layers = 5
-    num_filters = 10
+    num_filters = 32
     kernel_size = 2
     dropout = 0.1
 
-    model = models[0]
+    model = models[2]
     checkpoint_folder = 'checkpoints'
     arena_games = 40
     arena_threshold = 0.55
-    temp_threshold = 15
+    temp_threshold = 25
     num_iters = 10
 
     custom_loss = False
 
+    num_episodes = 100
     c_puct = 1
-    num_sims = 100
+    num_sims = 10

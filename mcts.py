@@ -41,6 +41,10 @@ class Node(object):
             player_change: an int to represent either the child nodes results in player change
                             1 if player remains the same and -1 if player changes
         """
+        if predicted_p is None or np.isnan(np.sum(predicted_p)):
+            import pdb; pdb.set_trace()
+        if abs(np.sum(predicted_p) - 1) >= .0001:
+            import pdb; pdb.set_trace()
         assert abs(np.sum(predicted_p) - 1) < .0001
         self.action_type = action_type
         predicted_p = predicted_p.squeeze()
@@ -126,11 +130,19 @@ class MCTS(object):
         else:
             action_filter = 0
         p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
+        p_placement = np.squeeze(p_placement)
+        p_capture = np.squeeze(p_capture)
+        if np.any(np.isnan(p_placement)):
+            import pdb; pdb.set_trace()
+        if np.any(np.isnan(p_capture)):
+            import pdb; pdb.set_trace()
 
         winner = self.game.get_game_ended(board_state)
+        '''
         if ((np.sum(valid_placement * p_placement) == 0) and
                 (np.sum(valid_capture * p_capture) == 0) and winner == 0):
             import pdb; pdb.set_trace()
+        '''
         if winner == 0:
             # No player has won
             valid_placement, valid_capture = self.game.get_valid_actions(board_state)
@@ -139,12 +151,14 @@ class MCTS(object):
             if np.any(valid_placement == True):
                 p_placement = np.multiply(p_placement, valid_placement)
                 if np.sum(p_placement) == 0:
+                    import pdb; pdb.set_trace()
                     p_placement = valid_placement.astype(np.float32)
                 p_placement /= np.sum(p_placement)
                 node.expand('PUT', p_placement, player_change)
             else:
                 p_capture = np.multiply(p_capture, valid_capture)
                 if np.sum(p_capture) == 0:
+                    import pdb; pdb.set_trace()
                     p_capture = valid_capture.astype(np.float32)
                 p_capture /= np.sum(p_capture)
                 # if p_capture[0, 4,2,2] != 0:
