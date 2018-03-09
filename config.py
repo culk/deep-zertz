@@ -18,14 +18,14 @@ class Config(object):
     kernel_size = 2
     dropout = 0.1
 
-    model = models[2]
+    model = models[0]
     checkpoint_folder = 'checkpoints'
     arena_games = 40
     arena_threshold = 0.55
     temp_threshold = 25
     num_iters = 10
 
-    custom_loss = False
+    custom_loss = True
 
     num_episodes = 5
     c_puct = 1

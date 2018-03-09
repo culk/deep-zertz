@@ -48,6 +48,8 @@ class NNetWrapper(object):
         :return:
         '''
         input_states, target_put_pis, target_capture_pis, target_vs, is_put = examples
+
+        put_aux, capture_aux = self.mask_matrix(is_put)
         #import pdb; pdb.set_trace()
         # TODO: make sure that is capture
 
@@ -58,12 +60,30 @@ class NNetWrapper(object):
         is_put = np.asarray(is_put)
 
         self.nnet.model.fit(
-                x={'inputs':input_states, 'aux_input':is_put},
+                x={'inputs':input_states, 'put_aux':put_aux, 'capture_aux':capture_aux},
                 y=[target_put_pis, target_capture_pis, target_vs],
                 batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
 
+    def mask_matrix(self, is_put):
+        '''
+
+        :param is_put: binary np array of (examples, )
+        :return:
+        '''
+        if type(is_put) is int or type(is_put) is bool:
+            put_aux = np.array([is_put] * self.put_action_size).reshape((1, -1))
+            capture_aux = np.array([1-is_put] * self.capture_action_size).reshape((1, -1))
+
+        else:
+            is_put = is_put.reshape((-1, 1))
+            put_aux = np.repeat(is_put, repeats=self.put_action_size, axis=1)
+            capture_aux = np.repeat((1.0 - is_put), repeats=self.capture_action_size, axis=1)
+        return put_aux, capture_aux
+
     def predict(self, states, is_put):
-        put_pi, capture_pi, v = self.nnet.model.predict([np.expand_dims(states, axis=0), np.array([is_put])])
+        put_aux, capture_aux = self.mask_matrix(is_put)
+
+        put_pi, capture_pi, v = self.nnet.model.predict([np.expand_dims(states, axis=0), put_aux, capture_aux])
 
         put_pi_size = self.game.get_placement_action_shape()
         capture_pi_size = self.game.get_capture_action_shape()
