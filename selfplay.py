@@ -73,12 +73,13 @@ class Arena(object):
         self.game.reset_board()
 
         while self.game.get_game_ended() == 0:
+            # Reset the MCTS to start at the new board state
             self.player1.reset()
             self.player2.reset()
             state, player_value = self.game.get_current_state()
             if player_value == 1: # if cur_player is player1
                 action_type, actions, probs = self.player1.get_action_prob(state, temp=0)
-            else: # plaver_value == -1
+            else: # plaver_value == -1 and cur_player is player2
                 action_type, actions, probs = self.player2.get_action_prob(state, temp=0)
 
             action = actions[np.argmax(probs)]
@@ -88,6 +89,7 @@ class Arena(object):
 
     def play_matches(self, num_games):
         player1_win, player2_win, draw = 0, 0, 0
+        # Player1 is new model
         for _ in range(num_games/2):
             winner = self.match()
             if winner == 1:
@@ -97,13 +99,14 @@ class Arena(object):
             else:
                 draw += 1
 
+        # Switch who goes first, player2 is new model
         self.player1, self.player2 = self.player2, self.player1
         for _ in range(num_games/2):
             winner = self.match()
             if winner == 1:
-                player1_win += 1
-            elif winner == -1:
                 player2_win += 1
+            elif winner == -1:
+                player1_win += 1
             else:
                 draw += 1
 

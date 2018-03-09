@@ -5,7 +5,7 @@ from config import Config
 
 if __name__ == '__main__':
     rings = 19
-    marbles = {'w': 4, 'g': 0, 'b': 0}
+    marbles = {'w': 20, 'g': 0, 'b': 0}
     win_con = [{'w': 2}]
     t = 2
 
