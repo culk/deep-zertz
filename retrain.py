@@ -55,7 +55,6 @@ class Coach(object):
         return (np_board, np_pi_put, np_pi_cap, np_v, np_mask)   
 
     def shuffle_examples(self, examples):
-        import pdb; pdb.set_trace()
         order = np.random.permutation(len(examples[0]))
         for array in examples:
             array = array[order, ...]
