@@ -9,7 +9,7 @@ class Node(object):
     """
     def __init__(self, parent, P, cur_player):
         self.N = 0
-        self.Q = 0
+        self.Q = 0.0
         self.P = P
         self.child = {}
         self.action_type = None # will be assigned upon expanding
@@ -50,7 +50,7 @@ class Node(object):
                 for k in xrange(x):
                     action = (i, j, k)
                     prob = predicted_p[action]
-                    if action not in self.child:
+                    if action not in self.child and prob > 0:
                         self.child[action] = Node(self, prob, player_change*self.cur_player)
 
     def get_action(self, c_puct):
@@ -170,7 +170,7 @@ class MCTS(object):
         if temp==0:
             probs = np.zeros_like(count)
             probs[np.argmax(count)] = 1
-            return action_type, actions, probs
+            return self.restore_action_matrix(action_type, actions, probs)
 
         if sum(count) == 0:
             import pdb; pdb.set_trace()
@@ -184,4 +184,21 @@ class MCTS(object):
             probs = np.array(probs).reshape(self.game.get_capture_action_shape())
                     '''
          
-        return action_type, actions, probs
+        return self.restore_action_matrix(action_type, actions, probs)
+
+    def restore_action_matrix(self, action_type, actions, probs):
+        if action_type == 'PUT':
+            probs_full = np.zeros(self.game.get_placement_action_size())
+        else:
+            probs_full = np.zeros(self.game.get_capture_action_size())
+
+        for ind, p in zip(actions, probs):
+            probs_full[ind] = p
+
+        x, y, z = probs_full.shape
+        actions_full = [(i, j, k) for i in range(x) for j in range(y) for k in range(z)]
+        assert(np.sum(probs_full) == 1)
+        assert(actions_full[np.argmax(probs_full)] == actions[np.argmax(probs)])
+        return actions_full, probs_full
+
+
