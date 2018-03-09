@@ -12,6 +12,7 @@ class Coach(object):
         self.config = config
         self.prev_model = self.model.__class__(self.game, self.config)
 
+
     def learn(self):
         for i in range(self.config.num_iters):
             self_play = SelfPlay(self.game, self.model)

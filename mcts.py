@@ -129,6 +129,7 @@ class MCTS(object):
             action_filter = 1
         else:
             action_filter = 0
+
         p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
         p_placement = np.squeeze(p_placement)
         p_capture = np.squeeze(p_capture)
