@@ -15,7 +15,9 @@ class Coach(object):
     def learn(self):
         for i in range(self.config.num_iters):
             self_play = SelfPlay(self.game, self.model)
-            examples = self_play.generate_play_data()
+            examples = []
+            for _ in range(self.config.num_episodes):
+                examples += self_play.generate_play_data()
             examples = self.shuffle_examples(examples)
 
             # Step 1. Keep a copy of the current model
