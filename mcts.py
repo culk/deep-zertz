@@ -41,6 +41,7 @@ class Node(object):
             player_change: an int to represent either the child nodes results in player change
                             1 if player remains the same and -1 if player changes
         """
+        assert abs(np.sum(predicted_p) - 1) < .0001
         self.action_type = action_type
         predicted_p = predicted_p.squeeze()
         z, y, x = predicted_p.shape
@@ -65,8 +66,8 @@ class Node(object):
                 best_a = action
                 next_node = node
 
-        if best_a is None:
-            import pdb; pdb.set_trace()
+        #if best_a is None:
+            #import pdb; pdb.set_trace()
         assert(self.action_type is not None)
         return self.action_type, best_a, next_node
 
@@ -87,6 +88,10 @@ class MCTS(object):
         self.c_puct = c_puct
         self.num_sim = num_sim
         self.root = Node(None, 1.0, 1)
+        #self.node_dict = {tuple(self.game.board.state.flatten()): self.root}
+
+    def reset(self):
+        self.root = Node(None, 1.0, 1)
 
     def simulate(self, board_state):
         """
@@ -97,13 +102,20 @@ class MCTS(object):
             state is a tuple of (board_state, player)
         """
 
+        #node = self.node_dict[tuple(board_state.flatten())]
+        #self.root = Node(None, 1.0, 1)
         node = self.root
         player_change = 1
         while True:
             if node.is_leaf():
+                print('break')
                 break
             action_type, best_a, node = node.get_action(self.c_puct)
+            print(action_type, best_a, board_state[-1, 0, 0])
+            print(np.sum(board_state[:4], axis=0))
+            #import pdb; pdb.set_trace()
             next_board_state, _ = self.game.get_next_state(best_a, action_type, board_state)
+            #self.node_dict[tuple(next_board_state.flatten())] = node
             player_change = 1 if next_board_state[-1, 0, 0] == board_state[-1, 0, 0] else -1
             board_state = next_board_state
         
@@ -115,6 +127,9 @@ class MCTS(object):
         p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
 
         winner = self.game.get_game_ended(board_state)
+        if ((np.sum(valid_placement * p_placement) == 0) and
+                (np.sum(valid_capture * p_capture) == 0) and winner == 0):
+            import pdb; pdb.set_trace()
         if winner == 0:
             # No player has won
             valid_placement, valid_capture = self.game.get_valid_actions(board_state)
@@ -132,6 +147,7 @@ class MCTS(object):
                     p_capture = valid_capture.astype(np.float32)
                 p_capture /= np.sum(p_capture)
                 node.expand('CAP', p_capture, player_change)
+
         else:
             v = winner
 
@@ -152,7 +168,16 @@ class MCTS(object):
             probs[np.argmax(count)] = 1
             return action_type, actions, probs
 
+        if sum(count) == 0:
+            import pdb; pdb.set_trace()
         counts = [x**(1./temp) for x in count]
         probs = [x/float(sum(counts)) for x in counts]
+
+        '''
+        if action_type == 'PUT':
+            probs = np.array(probs).reshape(self.game.get_placement_action_shape())
+        else:
+            probs = np.array(probs).reshape(self.game.get_capture_action_shape())
+                    '''
          
         return action_type, actions, probs

@@ -48,7 +48,7 @@ class NNetWrapper(object):
         :return:
         '''
         input_states, target_put_pis, target_capture_pis, target_vs, is_put = examples
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         # TODO: make sure that is capture
 
         input_states = np.asarray(input_states)

@@ -7,21 +7,22 @@ class SelfPlay(object):
     def __init__(self, game, nnet):
         self.game = deepcopy(game)
         self.nnet = nnet
-        self.mcts = MCTS(self.game, nnet, Config.c_puct, Config.num_sims)
+        self.mcts = MCTS(self.game, self.nnet, Config.c_puct, Config.num_sims)
         self.temp_threshold = Config.temp_threshold
 
     def generate_play_data(self):
         examples = []
         self.game.reset_board()     
         episode_step = 0
-        null_cap_pi = np.zeros(shape=self.game.get_capture_action_shape())
-        null_put_pi = np.zeros(shape=self.game.get_placement_action_shape())
+        null_cap_pi = np.zeros(self.game.get_capture_action_size())
+        null_put_pi = np.zeros(self.game.get_placement_action_size())
         
         board_state, player_value = self.game.get_current_state()
 
         while True:
             episode_step += 1
             print(episode_step)
+            self.mcts.reset()
             temp = int(episode_step < self.temp_threshold)
 
             action_type, actions, probs = self.mcts.get_action_prob(board_state, temp=temp)
@@ -30,8 +31,8 @@ class SelfPlay(object):
 
             action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
             board_state, player_value = self.game.get_next_state(action, action_type)
-            print(action_type, action)
-            print(self.game.board.state[0])
+            #print(action_type, action)
+            #print(self.game.board.state[0])
 
             winner = self.game.get_game_ended(board_state)
 
@@ -71,13 +72,15 @@ class Arena(object):
         self.game.reset_board()
 
         while self.game.get_game_ended() == 0:
+            self.player1.reset()
+            self.player2.reset()
             state, player_value = self.game.get_current_state()
             if player_value == 1: # if cur_player is player1
                 action_type, actions, probs = self.player1.get_action_prob(state, temp=0)
             else: # plaver_value == -1
                 action_type, actions, probs = self.player2.get_action_prob(state, temp=0)
 
-            act = action[np.argmax(probs)]
+            action = actions[np.argmax(probs)]
             self.game.get_next_state(action, action_type)
 
         return self.game.get_game_ended()

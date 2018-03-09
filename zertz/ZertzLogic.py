@@ -212,6 +212,10 @@ class Board():
             rem_index = (rem_loc // self.width, rem_loc % self.width)
 
         # Place the marble on the board
+        y, x = put_index
+        if np.sum(self.state[:4, y, x]) != 1:
+            import pdb; pdb.set_trace()
+        assert np.sum(self.state[:4, y, x]) == 1
         put_layer = self._MARBLE_TO_LAYER[marble_type] 
         self.state[put_layer][put_index] = 1
 
@@ -283,6 +287,8 @@ class Board():
         # Give the captured marble to the current player and remove it from the board
         y, x = cap_index
 
+        if np.sum(self.state[1:4, y, x]) != 1:
+            import pdb; pdb.set_trace()
         assert np.sum(self.state[1:4, y, x]) == 1
         captured_type = self._get_marble_type_at(cap_index)
         supply_layer = self._get_cur_player_supply_layer(captured_type)
