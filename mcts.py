@@ -66,10 +66,9 @@ class Node(object):
                 best_a = action
                 next_node = node
 
-        if self.child[best_a].P == 0:
-            import pdb; pdb.set_trace()
-        #if best_a is None:
-            #import pdb; pdb.set_trace()
+        # if self.child[best_a].P == 0:
+        #     import pdb; pdb.set_trace()
+        
         assert(self.action_type is not None)
         return self.action_type, best_a, next_node
 
@@ -110,11 +109,11 @@ class MCTS(object):
         player_change = 1
         while True:
             if node.is_leaf():
-                print('break')
+                # print('break')
                 break
             action_type, best_a, node = node.get_action(self.c_puct)
-            print(action_type, best_a, board_state[-1, 0, 0])
-            print(np.sum(board_state[:4], axis=0))
+            # print(action_type, best_a, board_state[-1, 0, 0])
+            # print(np.sum(board_state[:4], axis=0))
             #import pdb; pdb.set_trace()
             next_board_state, _ = self.game.get_next_state(best_a, action_type, board_state)
             #self.node_dict[tuple(next_board_state.flatten())] = node
@@ -148,8 +147,8 @@ class MCTS(object):
                 if np.sum(p_capture) == 0:
                     p_capture = valid_capture.astype(np.float32)
                 p_capture /= np.sum(p_capture)
-                if p_capture[0, 4,2,2] != 0:
-                    import pdb; pdb.set_trace()
+                # if p_capture[0, 4,2,2] != 0:
+                #     import pdb; pdb.set_trace()
                 node.expand('CAP', p_capture, player_change)
 
         else:
@@ -172,8 +171,6 @@ class MCTS(object):
             probs[np.argmax(count)] = 1
             return self.restore_action_matrix(action_type, actions, probs)
 
-        if sum(count) == 0:
-            import pdb; pdb.set_trace()
         counts = [x**(1./temp) for x in count]
         probs = [x/float(sum(counts)) for x in counts]
 
@@ -188,17 +185,19 @@ class MCTS(object):
 
     def restore_action_matrix(self, action_type, actions, probs):
         if action_type == 'PUT':
-            probs_full = np.zeros(self.game.get_placement_action_size())
+            probs_full = np.zeros(self.game.get_placement_action_shape())
         else:
-            probs_full = np.zeros(self.game.get_capture_action_size())
+            probs_full = np.zeros(self.game.get_capture_action_shape())
 
         for ind, p in zip(actions, probs):
             probs_full[ind] = p
 
         x, y, z = probs_full.shape
-        actions_full = [(i, j, k) for i in range(x) for j in range(y) for k in range(z)]
+        actions_full = np.array([(i, j, k) for i in range(x) for j in range(y) for k in range(z)])
+        probs_full = list(probs_full.flatten())
+
         assert(np.sum(probs_full) == 1)
-        assert(actions_full[np.argmax(probs_full)] == actions[np.argmax(probs)])
-        return actions_full, probs_full
+
+        return action_type, actions_full, probs_full
 
 
