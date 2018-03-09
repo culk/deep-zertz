@@ -17,15 +17,17 @@ class Node(object):
         self.parent = parent
 
     def update(self, predicted_v):
-        """Update node values from leaf evaluation.
+        """
+        Update node values from leaf evaluation.
         Arguments:
         leaf_value -- the value of subtree evaluation from the current player's perspective.        
         """
-        self.Q = (self.Q * self.N + predicted_v) / (self.N + 1)
+        self.Q = (self.Q * self.N + predicted_v) / (self.N + 1.)
         self.N += 1
 
     def recurse_update(self, predicted_v):
-        """Call by MCTS to recursively propagate predicted_v up to ancestor
+        """
+        Call by MCTS to recursively propagate predicted_v up to ancestor
         """
         # If it is not root, this node's parent should be updated first.
         if self.parent:
@@ -36,18 +38,17 @@ class Node(object):
         self.update(predicted_v)
 
     def expand(self, action_type, predicted_p, player_change):
-        """Expand the search tree by attaching child nodes to current state
+        """
+        Expand the search tree by attaching child nodes to current state
         Args:
             player_change: an int to represent either the child nodes results in player change
                             1 if player remains the same and -1 if player changes
         """
-        if predicted_p is None or np.isnan(np.sum(predicted_p)):
-            import pdb; pdb.set_trace()
-        if abs(np.sum(predicted_p) - 1) >= .0001:
-            import pdb; pdb.set_trace()
         assert abs(np.sum(predicted_p) - 1) < .0001
+
         self.action_type = action_type
-        predicted_p = predicted_p.squeeze()
+        #predicted_p = predicted_p.squeeze()
+        '''
         z, y, x = predicted_p.shape
         for i in xrange(z):
             for j in xrange(y):
@@ -55,30 +56,30 @@ class Node(object):
                     action = (i, j, k)
                     prob = predicted_p[action]
                     if action not in self.child and prob > 0:
-                        self.child[action] = Node(self, prob, player_change*self.cur_player)
+        '''
+        for action in zip(*np.where(predicted_p > 0)):
+            prob = predicted_p[action]
+            self.child[action] = Node(self, prob, player_change*self.cur_player)
 
     def get_action(self, c_puct):
-        """Gets best action based on current estimate of Q and U
+        """
+        Gets best action based on current estimate of Q and U
         """
         max_u = float('-inf')
         best_a = None
         next_node = None
+
         for action, node in self.child.items():
-            u = node.Q + c_puct * node.P * np.sqrt(self.N) / (1 + node.N)
-            if u > max_u:
-                max_u = u
+            U = node.Q + c_puct * node.P * np.sqrt(self.N) / (1. + node.N)
+            if U > max_u:
+                max_u = U
                 best_a = action
                 next_node = node
 
-        # if self.child[best_a].P == 0:
-        #     import pdb; pdb.set_trace()
-        
-        assert(self.action_type is not None)
         return self.action_type, best_a, next_node
 
     def is_leaf(self):
         return self.child == {}
-
 
 class MCTS(object):
     def __init__(self, game, nnet, c_puct, num_sim):
@@ -93,7 +94,6 @@ class MCTS(object):
         self.c_puct = c_puct
         self.num_sim = num_sim
         self.root = Node(None, 1.0, 1)
-        #self.node_dict = {tuple(self.game.board.state.flatten()): self.root}
 
     def reset(self):
         self.root = Node(None, 1.0, 1)
@@ -106,68 +106,60 @@ class MCTS(object):
         Args:
             state is a tuple of (board_state, player)
         """
-
-        #node = self.node_dict[tuple(board_state.flatten())]
-        #self.root = Node(None, 1.0, 1)
         node = self.root
         player_change = 1
+
         while True:
             if node.is_leaf():
-                # print('break')
                 break
             action_type, best_a, node = node.get_action(self.c_puct)
-            # print(action_type, best_a, board_state[-1, 0, 0])
-            # print(np.sum(board_state[:4], axis=0))
-            #import pdb; pdb.set_trace()
             next_board_state, _ = self.game.get_next_state(best_a, action_type, board_state)
-            #self.node_dict[tuple(next_board_state.flatten())] = node
             player_change = 1 if next_board_state[-1, 0, 0] == board_state[-1, 0, 0] else -1
             board_state = next_board_state
         
+        # Get which type of action is valid from the leaf node board state
         valid_placement, valid_capture = self.game.get_valid_actions(board_state)
         if np.any(valid_placement == True):
             action_filter = 1
         else:
             action_filter = 0
-        p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
-        p_placement = np.squeeze(p_placement)
-        p_capture = np.squeeze(p_capture)
-        if np.any(np.isnan(p_placement)):
-            import pdb; pdb.set_trace()
-        if np.any(np.isnan(p_capture)):
-            import pdb; pdb.set_trace()
 
-        winner = self.game.get_game_ended(board_state)
-        '''
-        if ((np.sum(valid_placement * p_placement) == 0) and
-                (np.sum(valid_capture * p_capture) == 0) and winner == 0):
-            import pdb; pdb.set_trace()
-        '''
-        if winner == 0:
-            # No player has won
-            valid_placement, valid_capture = self.game.get_valid_actions(board_state)
-            valid_placement = np.squeeze(valid_placement)
-            valid_capture = np.squeeze(valid_capture)
+        # Predict the action probabilities using the nnet, filtering for the action type
+        p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
+
+        # Check if the leaf node is a game over state
+        game_value = self.game.get_game_ended(board_state)
+
+        if game_value == 0:
+            # No player has won, get action filters and expand the node with predicted probs
+            p_placement = np.squeeze(p_placement)
+            p_capture = np.squeeze(p_capture)
+
+            # TODO: debug custom loss
+            if np.any(np.isnan(p_placement)):
+                import pdb; pdb.set_trace()
+            if np.any(np.isnan(p_capture)):
+                import pdb; pdb.set_trace()
+            # end debug for custom_loss
+
             if np.any(valid_placement == True):
                 p_placement = np.multiply(p_placement, valid_placement)
                 if np.sum(p_placement) == 0:
-                    import pdb; pdb.set_trace()
                     p_placement = valid_placement.astype(np.float32)
                 p_placement /= np.sum(p_placement)
                 node.expand('PUT', p_placement, player_change)
             else:
                 p_capture = np.multiply(p_capture, valid_capture)
                 if np.sum(p_capture) == 0:
-                    import pdb; pdb.set_trace()
                     p_capture = valid_capture.astype(np.float32)
                 p_capture /= np.sum(p_capture)
-                # if p_capture[0, 4,2,2] != 0:
-                #     import pdb; pdb.set_trace()
                 node.expand('CAP', p_capture, player_change)
 
         else:
-            v = winner
+            # If game is over we know the true value of the game
+            v = game_value
 
+        # Use the true or predicted value of the game to update the nodes
         node.recurse_update(-v)
 
     def get_action_prob(self, state, temp):

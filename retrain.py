@@ -45,6 +45,7 @@ class Coach(object):
                 self.model.load_checkpoint(filename='temp.pth.tar')
 
     def shuffle_examples(self, examples):
+        import pdb; pdb.set_trace()
         order = np.random.permutation(len(examples[0]))
         for array in examples:
             array = array[order, ...]

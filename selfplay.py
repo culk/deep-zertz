@@ -1,7 +1,8 @@
-from mcts import MCTS
-from config import Config
 from copy import deepcopy
 import numpy as np
+
+from mcts import MCTS
+from config import Config
 
 class SelfPlay(object):
     def __init__(self, game, nnet):
@@ -21,7 +22,6 @@ class SelfPlay(object):
 
         while True:
             episode_step += 1
-            print(episode_step)
             self.mcts.reset()
             temp = int(episode_step < self.temp_threshold)
 
@@ -38,7 +38,6 @@ class SelfPlay(object):
             winner = self.game.get_game_ended(board_state)
 
             if winner != 0:
-                print('w')
                 new_examples = []
                 for e in examples:
                     if e[1] == 'PUT':
@@ -53,9 +52,7 @@ class SelfPlay(object):
                 return (np_board, np_pi_put, np_pi_cap, np_v, np_mask)
 
             if episode_step > 2000 and winner == 0:
-                print('bad')
                 return self.generate_play_data()
-
 
 class Arena(object):
     def __init__(self, game, player_agent1, player_agent2):
@@ -112,4 +109,3 @@ class Arena(object):
 
         return player1_win, player2_win, draw
 
-            
