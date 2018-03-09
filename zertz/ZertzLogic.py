@@ -275,6 +275,10 @@ class Board():
         dy, dx = self._DIRECTIONS[direction]
         cap_index = (y + dy, x + dx)
         dst_index = self._get_jump_dst(src_index, cap_index)
+        y, x = cap_index
+
+        if np.sum(self.state[1:4, y, x]) != 1:
+            import pdb; pdb.set_trace()
 
         # Reset the capture layer
         self.state[self._CAPTURE_LAYER] = 0
@@ -285,10 +289,10 @@ class Board():
         self.state[marble_layer][dst_index] = 1
 
         # Give the captured marble to the current player and remove it from the board
-        y, x = cap_index
-
-        if np.sum(self.state[1:4, y, x]) != 1:
-            import pdb; pdb.set_trace()
+#        y, x = cap_index
+#
+#        if np.sum(self.state[1:4, y, x]) != 1:
+#            import pdb; pdb.set_trace()
         assert np.sum(self.state[1:4, y, x]) == 1
         captured_type = self._get_marble_type_at(cap_index)
         supply_layer = self._get_cur_player_supply_layer(captured_type)

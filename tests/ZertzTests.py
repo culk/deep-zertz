@@ -258,6 +258,18 @@ class TestZertzGame(unittest.TestCase):
         self.assertEqual(np.sum(state[game.board._CAPTURE_LAYER]), 0)
         self.assertEqual(player_value, 1)
 
+    def test_take_422(self):
+        game = ZertzGame(19)
+        game.get_next_state((0, 11, 5), 'PUT')
+        print('')
+        print(np.sum(game.board.state[:2], axis=0))
+        game.get_next_state((0, 8, 24), 'PUT')
+        print(np.sum(game.board.state[:2], axis=0))
+        game.get_next_state((0, 12, 22), 'PUT')
+        print(np.sum(game.board.state[:2], axis=0))
+        game.get_next_state((4, 2, 1), 'CAP')
+        print(np.sum(game.board.state[:2], axis=0))
+
     def test_game_end(self):
         game = ZertzGame(1)
         self.assertEqual(game.get_game_ended(), 0)

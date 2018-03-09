@@ -66,6 +66,8 @@ class Node(object):
                 best_a = action
                 next_node = node
 
+        if self.child[best_a].P == 0:
+            import pdb; pdb.set_trace()
         #if best_a is None:
             #import pdb; pdb.set_trace()
         assert(self.action_type is not None)
@@ -146,6 +148,8 @@ class MCTS(object):
                 if np.sum(p_capture) == 0:
                     p_capture = valid_capture.astype(np.float32)
                 p_capture /= np.sum(p_capture)
+                if p_capture[0, 4,2,2] != 0:
+                    import pdb; pdb.set_trace()
                 node.expand('CAP', p_capture, player_change)
 
         else:
