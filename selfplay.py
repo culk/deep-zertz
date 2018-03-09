@@ -30,6 +30,7 @@ class SelfPlay(object):
             examples.append([board_state, action_type, probs, player_value])
 
             action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
+
             board_state, player_value = self.game.get_next_state(action, action_type)
             #print(action_type, action)
             #print(self.game.board.state[0])
