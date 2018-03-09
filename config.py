@@ -27,6 +27,6 @@ class Config(object):
 
     custom_loss = True
 
-    num_episodes = 100
+    num_episodes = 10
     c_puct = 1
     num_sims = 10
