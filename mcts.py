@@ -65,8 +65,6 @@ class Node(object):
                 best_a = action
                 next_node = node
 
-        if best_a is None:
-            import pdb; pdb.set_trace()
         assert(self.action_type is not None)
         return self.action_type, best_a, next_node
 

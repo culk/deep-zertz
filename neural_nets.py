@@ -115,7 +115,7 @@ class DenseModel(object):
             self.pi_put = Lambda(lambda x: mask_put(x))(self.pi_put)
             self.pi_capture = Lambda(lambda x: mask_capture(x))(self.pi_capture)
 
-        self.model = Model(inputs=inputs, outputs=[self.pi_put, self.pi_capture, self.v])
+        self.model = Model(inputs=[inputs, aux_input], outputs=[self.pi_put, self.pi_capture, self.v])
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
                            optimizer=Adam(self.config.lr))
 
@@ -170,6 +170,6 @@ class ConvModel(object):
             self.pi_put = Lambda(lambda x: mask_put(x))(self.pi_put)
             self.pi_capture = Lambda(lambda x: mask_capture(x))(self.pi_capture)
 
-        self.model = Model(inputs=inputs, outputs=[self.pi_put, self.pi_capture, self.v])
+        self.model = Model(inputs=[inputs, aux_input], outputs=[self.pi_put, self.pi_capture, self.v])
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
                            optimizer=Adam(self.config.lr))
