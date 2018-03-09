@@ -45,12 +45,7 @@ class SelfPlay(object):
                         new_examples.append((e[0],e[2], null_cap_pi, 1 if winner==player_value else -1, 1))
                     else:
                         new_examples.append((e[0], null_put_pi, e[2], 1 if winner==player_value else -1, 0))
-                np_board = np.array([ne[0] for ne in new_examples])
-                np_pi_put = np.array([ne[1] for ne in new_examples])
-                np_pi_cap = np.array([ne[2] for ne in new_examples])
-                np_v = np.array([ne[3] for ne in new_examples])
-                np_mask = np.array([ne[4] for ne in new_examples])
-                return (np_board, np_pi_put, np_pi_cap, np_v, np_mask)
+                return new_examples   
 
             if episode_step > 2000 and winner == 0:
                 print('bad')
