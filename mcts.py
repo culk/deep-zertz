@@ -174,29 +174,24 @@ class MCTS(object):
         counts = [x**(1./temp) for x in count]
         probs = [x/float(sum(counts)) for x in counts]
 
-        '''
-        if action_type == 'PUT':
-            probs = np.array(probs).reshape(self.game.get_placement_action_shape())
-        else:
-            probs = np.array(probs).reshape(self.game.get_capture_action_shape())
-                    '''
-         
         return self.restore_action_matrix(action_type, actions, probs)
 
     def restore_action_matrix(self, action_type, actions, probs):
+        # Returns lists of actions and their corresponding probabilities for all 
+        # actions of the action_type. Invalid actions will have 0 probability.
         if action_type == 'PUT':
             probs_full = np.zeros(self.game.get_placement_action_shape())
         else:
             probs_full = np.zeros(self.game.get_capture_action_shape())
 
-        for ind, p in zip(actions, probs):
-            probs_full[ind] = p
+        for index, p in zip(actions, probs):
+            probs_full[index] = p
 
-        x, y, z = probs_full.shape
-        actions_full = np.array([(i, j, k) for i in range(x) for j in range(y) for k in range(z)])
+        assert abs(np.sum(probs_full) - 1) < .0001
+
+        z, y, x = probs_full.shape
+        actions_full = [(i, j, k) for i in range(z) for j in range(y) for k in range(x)]
         probs_full = list(probs_full.flatten())
-
-        assert(np.sum(probs_full) == 1)
 
         return action_type, actions_full, probs_full
 
