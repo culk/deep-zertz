@@ -13,7 +13,7 @@ class Config(object):
     batch_size = 20
     epochs = 10
 
-    num_layers = 5
+    num_layers = 2
     num_filters = 32
     kernel_size = 2
     dropout = 0.1
@@ -22,11 +22,11 @@ class Config(object):
     checkpoint_folder = 'checkpoints'
     arena_games = 40
     arena_threshold = 0.55
-    temp_threshold = 25
+    temp_threshold = 6
     num_iters = 10
 
-    custom_loss = True
+    custom_loss = False
 
-    num_episodes = 5
+    num_episodes = 20
     c_puct = 1
     num_sims = 10
