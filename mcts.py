@@ -156,30 +156,37 @@ class MCTS(object):
 
         node.recurse_update(-v)
 
-
     def get_action_prob(self, state, temp):
-
-        for _ in range(self.num_sim):
+        # Return the actions and corresponding probabilities for the current state.
+        #   temp is the temperature to control exploration/eploitation
+        for _ in xrange(self.num_sim):
             state_copy = np.copy(state)
             self.simulate(state_copy)
 
+        # Get list of actions from tree root and number of times each child has been visited
         action_type = self.root.action_type
-        Nas = [(action, node.N) for action, node in self.root.child.items()]
-        actions, count = zip(*Nas)
-        if temp==0:
-            probs = np.zeros_like(count)
-            probs[np.argmax(count)] = 1
-            return self.restore_action_matrix(action_type, actions, probs)
+        action_visits = [(action, node.N) for action, node in self.root.child.items()]
+        actions, visits = zip(*action_visits)
 
-        counts = [x**(1./temp) for x in count]
-        probs = [x/float(sum(counts)) for x in counts]
+        if temp == 0:
+            # Exploitation, recommend the action that has the highest visit count
+            probs = np.zeros_like(visits)
+            probs[np.argmax(visits)] = 1
+            actions, probs = self.restore_action_matrix(actions, probs)
+        else:
+            # Exploration, assign some probability to less visited child nodes
+            probs = np.array(visits)**(1. / temp)
+            #probs = [x**(1./temp) for x in visits]
+            #probs = [x/float(sum(counts)) for x in counts]
+            probs /= np.sum(probs)
+            actions, probs = self.restore_action_matrix(actions, probs)
 
-        return self.restore_action_matrix(action_type, actions, probs)
+        return action_type, actions, probs
 
-    def restore_action_matrix(self, action_type, actions, probs):
+    def restore_action_matrix(self, actions, probs):
         # Returns lists of actions and their corresponding probabilities for all 
-        # actions of the action_type. Invalid actions will have 0 probability.
-        if action_type == 'PUT':
+        # actions of the current action type. Invalid actions will have 0 probability.
+        if self.root.action_type == 'PUT':
             probs_full = np.zeros(self.game.get_placement_action_shape())
         else:
             probs_full = np.zeros(self.game.get_capture_action_shape())
@@ -190,9 +197,8 @@ class MCTS(object):
         assert abs(np.sum(probs_full) - 1) < .0001
 
         z, y, x = probs_full.shape
-        actions_full = [(i, j, k) for i in range(z) for j in range(y) for k in range(x)]
+        actions_full = [(i, j, k) for i in xrange(z) for j in xrange(y) for k in xrange(x)]
         probs_full = list(probs_full.flatten())
 
-        return action_type, actions_full, probs_full
-
+        return actions_full, probs_full
 
