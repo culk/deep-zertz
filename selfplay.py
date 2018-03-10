@@ -43,6 +43,7 @@ class SelfPlay(object):
                 # If the game reaches turn 200 with no winner then it is a draw and value is 0
                 new_examples = []
                 for e in examples:
+                    # TODO: (feature add) add all symmetrical board states to the examples
                     state = e[0]
                     v = winner * e[3]
                     if e[1] == 'PUT':

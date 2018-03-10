@@ -60,6 +60,8 @@ class Node(object):
         next_node = None
 
         for action, node in self.child.items():
+            # TODO: (feature add) scale the prior probabilities for the root node based on the size
+            #       of the typical action state space (page 14 AlphaZero paper).
             U = node.Q + c_puct * node.P * np.sqrt(self.N) / (1. + node.N)
             if U > max_u:
                 max_u = U
