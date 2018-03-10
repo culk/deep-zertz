@@ -149,14 +149,30 @@ class ResNet(object):
 
     def bn_relu(self, input):
         norm = BatchNormalization(axis=1)(input)
+        return Activation('relu')(norm)
 
     def conv_bn_relu(self, num_filters, kernel_size, strides):
-        out = Conv2D(filters=num_filters,
-                     kernel_size=kernel_size,
-                     strides=strides,
-                     padding='same',
-                     data_format='channels_first',
-                     kernel_regularizer=l2(self.config.regularizer))
+        def f(input):
+            out = Conv2D(filters=num_filters,
+                         kernel_size=kernel_size,
+                         strides=strides,
+                         padding='same',
+                         data_format='channels_first',
+                         kernel_regularizer=l2(self.config.regularizer))(input)
+            return self.bn_relu(out)
+        return f
+
+    def bn_conv_relu(self, num_filters, kernel_size, strides):
+        def f(input):
+            out = self.bn_relu(input)
+            return Conv2D(filters=num_filters,
+                         kernel_size=kernel_size,
+                         strides=strides,
+                         padding='same',
+                         data_format='channels_first',
+                         kernel_regularizer=l2(self.config.regularizer))(out)
+
+    def residual_block(self, ):
 
 
 
