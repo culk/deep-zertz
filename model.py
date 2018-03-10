@@ -2,8 +2,6 @@
 This file is a wrapper of the models including functions for training and evaluation
 '''
 from neural_nets import LinearModel, DenseModel, ConvModel
-from keras.callbacks import LearningRateScheduler
-import keras.backend as K
 import numpy as np
 import os
 

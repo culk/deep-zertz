@@ -2,10 +2,11 @@
 neural_nets.py contains various network structure, including linear model, dense model, conv model and residual net
 model
 '''
-from keras.layers import Input, Reshape, Dense, Conv2D, BatchNormalization, Activation, Flatten, Dropout, Lambda, Multiply
+from keras.layers import Input, Reshape, Dense, Conv2D, BatchNormalization, Activation, Flatten, Dropout, Lambda, Multiply, Add
 from keras.models import Model
 from keras.optimizers import Adam
 from keras.regularizers import l2
+import keras.backend as K
 
 '''
 # Possible alternate loss function
@@ -146,6 +147,7 @@ class ResNet(object):
     '''
     def __init__(self, game, config):
         self.config = config
+        self.game = game
 
     def bn_relu(self, input):
         norm = BatchNormalization(axis=1)(input)
@@ -174,7 +176,21 @@ class ResNet(object):
 
 
     def short_cut(self, input, residual):
-        
+        input_shape = K.int_shape(input)
+        residual_shape = K.int_shape(residual)
+        rate = int(input_shape[2] / residual_shape[2])
+
+        if input_shape != residual_shape:
+            shortcut = Conv2D(filters=residual_shape[1],
+                         kernel_size=1,
+                         strides=rate,
+                         padding='valid',
+                         data_format='channels_first',
+                         kernel_regularizer=l2(self.config.regularizer))(input)
+        else:
+            shortcut = input
+        return Add([shortcut, residual])
+
 
     def residual_block(self, num_filters, kernel_size, first_block=False, increase_dim=False):
         def f(input):
@@ -189,6 +205,15 @@ class ResNet(object):
                 out = self.bn_conv_relu(num_filters=num_filters, kernel_size=kernel_size, strides=1 + int(1+increase_dim))(input)
 
             out = self.bn_conv_relu(num_filters=num_filters, kernel_size=kernel_size, strides=1)(out)
+            return self.short_cut(input=input, residual=out)
+        return f
 
+    def build_graph(self):
+        self.state_depth, self.board_x, self.board_y = self.game.board.state.shape
+        self.put_action_size = self.game.get_placement_action_size()
+        self.capture_action_size = self.game.get_capture_action_size()
+        
+        inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
+        hidden = inputs
 
 
