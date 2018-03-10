@@ -30,6 +30,8 @@ class SelfPlay(object):
             action_type, actions, probs = self.mcts.get_action_prob(board_state, temp=temp)
             examples.append([board_state, action_type, probs, player_value])
 
+            # sum(probs) = 1.0000000029 raised an error in random choice: probabilities do not sum to 1
+            probs /= sum(probs)
             action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
             self.mcts.move_root(action)
 
