@@ -47,46 +47,29 @@ class NNetWrapper(object):
                 is_put = (num_examples, 1) binary array indicating if capture is valid for each example
         :return:
         '''
-        input_states, target_put_pis, target_capture_pis, target_vs, is_put = examples
+        input_states, target_pi, target_vs = examples
 
-        put_aux, capture_aux = self.mask_matrix(is_put)
         #import pdb; pdb.set_trace()
         # TODO: make sure that is capture
 
         input_states = np.asarray(input_states)
-        target_put_pis = np.asarray(target_put_pis)
-        target_capture_pis = np.asarray(target_capture_pis)
+        target_put_pis = np.asarray(target_pi)
         target_vs = np.asarray(target_vs)
-        is_put = np.asarray(is_put)
 
         self.nnet.model.fit(
-                x={'inputs':input_states, 'put_aux':put_aux, 'capture_aux':capture_aux},
-                y=[target_put_pis, target_capture_pis, target_vs],
+                x={'inputs':input_states},
+                y=[target_pi, target_vs],
                 batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
 
-    def mask_matrix(self, is_put):
-        '''
-
-        :param is_put: binary np array of (examples, )
-        :return:
-        '''
-        if type(is_put) is int or type(is_put) is bool:
-            put_aux = np.array([is_put] * self.put_action_size).reshape((1, -1))
-            capture_aux = np.array([1-is_put] * self.capture_action_size).reshape((1, -1))
-
-        else:
-            is_put = is_put.reshape((-1, 1))
-            put_aux = np.repeat(is_put, repeats=self.put_action_size, axis=1)
-            capture_aux = np.repeat((1.0 - is_put), repeats=self.capture_action_size, axis=1)
-        return put_aux, capture_aux
-
     def predict(self, states, is_put):
-        put_aux, capture_aux = self.mask_matrix(is_put)
 
-        put_pi, capture_pi, v = self.nnet.model.predict([np.expand_dims(states, axis=0), put_aux, capture_aux])
+        pi, v = self.nnet.model.predict([np.expand_dims(states, axis=0)])
 
         put_pi_size = self.game.get_placement_action_shape()
         capture_pi_size = self.game.get_capture_action_shape()
+
+        put_pi = pi[:, :self.game.get_placement_action_size()]
+        capture_pi = pi[:, self.game.get_placement_action_size():]
 
         put_pi = np.reshape(put_pi, (-1, put_pi_size[0], put_pi_size[1], put_pi_size[2]))
         capture_pi = np.reshape(capture_pi, (-1, capture_pi_size[0], capture_pi_size[1], capture_pi_size[2]))

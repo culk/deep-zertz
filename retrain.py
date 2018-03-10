@@ -50,9 +50,12 @@ class Coach(object):
         np_board = np.array([ne[0] for ne in list_of_examples])
         np_pi_put = np.array([ne[1] for ne in list_of_examples])
         np_pi_cap = np.array([ne[2] for ne in list_of_examples])
+
+        np_pi = np.concatenate((np_pi_put, np_pi_cap), axis=1)
+
         np_v = np.array([ne[3] for ne in list_of_examples])
         np_mask = np.array([ne[4] for ne in list_of_examples])
-        return (np_board, np_pi_put, np_pi_cap, np_v, np_mask)   
+        return (np_board, np_pi, np_v)
 
     def shuffle_examples(self, examples):
         order = np.random.permutation(len(examples[0]))

@@ -19,7 +19,7 @@ class Config(object):
     kernel_size = 2
     dropout = 0.1
 
-    model = models[0]
+    model = models[2]
     checkpoint_folder = 'checkpoints'
     arena_games = 40
     arena_threshold = 0.55
@@ -27,8 +27,6 @@ class Config(object):
     # selects optimal moves later in the game
     temp_threshold = 6
     num_iters = 10
-
-    custom_loss = False
 
     num_episodes = 25
     c_puct = 1

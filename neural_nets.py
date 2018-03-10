@@ -40,29 +40,20 @@ class LinearModel(object):
         :param config: A config object. It's by default the config.py
         '''
         self.state_depth, self.board_x, self.board_y = game.board.state.shape
-
         self.put_action_size = game.get_placement_action_size()
         self.capture_action_size = game.get_capture_action_size()
         self.config = config
 
         inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
-        put_aux = Input(shape=(self.put_action_size,), name="put_aux")
-        capture_aux = Input(shape=(self.capture_action_size,), name='capture_aux')
 
         hidden = Flatten()(inputs)
         hidden = Dense(self.config.hidden_size, activation='linear')(hidden)
-        self.pi_put = Dense(self.put_action_size, activation='softmax', name='pi_put')(hidden)
-        self.pi_capture = Dense(self.capture_action_size, activation='softmax', name='pi_capture')(hidden)
+        self.pi = Dense(self.put_action_size + self.capture_action_size, activation='softmax', name='pi')(hidden)
         self.v = Dense(1, activation='tanh', name='v')(hidden)
 
-        if self.config.custom_loss:
-            self.pi_put = Multiply()([self.pi_put, put_aux])
-            self.pi_capture = Multiply()([self.pi_capture, capture_aux])
+        self.model = Model(inputs=[inputs], outputs=[self.pi, self.v])
 
-        self.model = Model(inputs=[inputs, put_aux, capture_aux],
-                           outputs=[self.pi_put, self.pi_capture, self.v])
-
-        self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
+        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'],
                            optimizer=Adam(self.config.lr))
 
 class DenseModel(object):
@@ -90,23 +81,18 @@ class DenseModel(object):
         self.config = config
 
         inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
-        put_aux = Input(shape=(self.put_action_size,), name="put_aux")
-        capture_aux = Input(shape=(self.capture_action_size,), name='capture_aux')
+
         hidden = Flatten()(inputs)
 
         for i in range(self.config.num_layers):
             hidden = Dense(self.config.hidden_size, activation='relu')(hidden)
 
-        self.pi_put = Dense(self.put_action_size, activation='softmax', name='pi_put')(hidden)
-        self.pi_capture = Dense(self.capture_action_size, activation='softmax', name='pi_capture')(hidden)
+        self.pi = Dense(self.put_action_size + self.capture_action_size, activation='softmax', name='pi')(hidden)
         self.v = Dense(1, activation='tanh', name='v')(hidden)
 
-        if self.config.custom_loss:
-            self.pi_put = Multiply()([self.pi_put, put_aux])
-            self.pi_capture = Multiply()([self.pi_capture, capture_aux])
 
-        self.model = Model(inputs=[inputs, put_aux, capture_aux], outputs=[self.pi_put, self.pi_capture, self.v])
-        self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
+        self.model = Model(inputs=[inputs], outputs=[self.pi, self.v])
+        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'],
                            optimizer=Adam(self.config.lr))
 
 
@@ -134,8 +120,6 @@ class ConvModel(object):
         self.config = config
 
         inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
-        put_aux = Input(shape=(self.put_action_size,), name="put_aux")
-        capture_aux = Input(shape=(self.capture_action_size,), name='capture_aux')
 
         hidden = inputs
 
@@ -148,13 +132,8 @@ class ConvModel(object):
         hidden = Dropout(self.config.dropout)(Activation('relu')(BatchNormalization(axis=1)(Dense(1024)(hidden))))
         hidden = Dropout(self.config.dropout)(Activation('relu')(BatchNormalization(axis=1)(Dense(512)(hidden))))
 
-        self.pi_put = Dense(self.put_action_size, activation='softmax', name='pi_put')(hidden)
-        self.pi_capture = Dense(self.capture_action_size, activation='softmax', name='pi_capture')(hidden)
+        self.pi = Dense(self.put_action_size + self.capture_action_size, activation='softmax', name='pi')(hidden)
         self.v = Dense(1, activation='tanh', name='v')(hidden)
 
-        if self.config.custom_loss:
-            self.pi_put = Multiply()([self.pi_put, put_aux])
-            self.pi_capture = Multiply()([self.pi_capture, capture_aux])
-        self.model = Model(inputs=[inputs, put_aux, capture_aux], outputs=[self.pi_put, self.pi_capture, self.v])
-        self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy', 'mean_squared_error'],
-                           optimizer=Adam(self.config.lr))
+        self.model = Model(inputs=[inputs], outputs=[self.pi, self.v])
+        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=Adam(self.config.lr))
