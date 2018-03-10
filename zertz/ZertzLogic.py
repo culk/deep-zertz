@@ -429,13 +429,31 @@ class Board():
         removable = [index for index in self._get_open_rings() if self._is_removable(index)]
         return removable
 
-    def _get_rotational_symmetries(self):
-        pass
+    def _get_rotational_symmetries(self, state=None):
+        # Rotate the board 180 degrees
+        if state is not None:
+            rotated_state = np.copy(self.state)
+        else:
+            rotate_state = np.copy(state)
+        rotated_state = np.rot90(np.rot90(rotate_state, axes=(1, 2)), axes=(1, 2))
+        return rotate_state
 
-    def _get_mirrior_symmetries(self):
-        pass
+    def _get_mirror_symmetries(self, state=None):
+        # Flip the board while maintaining adjacency
+        if state is not None:
+            mirror_state = np.copy(self.state)
+        else:
+            mirror_state = np.copy(state)
+        layers = mirror_state.shape[0]
+        for i in xrange(layers):
+            mirror_state[i] = mirror_state[i].T
+        return mirror_state
 
-    def get_symmetries(self):
+    def get_state_symmetries(self):
         # Return a list of symmetrical states by mirroring and rotating the board
-        pass
+        symmetries = []
+        symmetries.append(self._get_mirror_symmetries())
+        symmetries.append(self._get_rotational_symmetries())
+        symmetries.append(self._get_rotational_symmetries(symmetries[0]))
+        return symmetries
 

@@ -155,7 +155,6 @@ class ZertzGame():
             return temp_game.get_game_ended()
 
     def get_symmetries(self):
-        # TODO: implement this later for training efficiency improvements
         # There are many symmetries in Zertz
         # First, there are rotational symmetry in that every board position can be rotated in
         # six different ways
@@ -164,6 +163,7 @@ class ZertzGame():
         # it can be shifted in one of the six directions and still be able to fit within the
         # original space.
         # Total board symmetries = 6 * 2 * (# of shift symmetries)
-        symmetries = self.board.get_symmetries()
+        # Total implemented currently = 4
+        symmetries = self.board.get_state_symmetries()
         return symmetries
 
