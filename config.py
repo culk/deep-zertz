@@ -26,7 +26,7 @@ class Config(object):
     # Should be set in a way that encourages exploration in early moves and then 
     # selects optimal moves later in the game
     temp_threshold = 6
-    num_iters = 50
+    num_iters = 30
 
     num_episodes = 100
     c_puct = 1
