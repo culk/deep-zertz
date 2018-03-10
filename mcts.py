@@ -130,7 +130,8 @@ class MCTS(object):
 
         # Predict the action probabilities using the nnet, filtering for the action type
         # TODO: (feature add) transform the board state to a random symmetry before predicting
-        #       the policies and v. This helps avoid bias in MCTS.
+        #       the policies and v. This helps avoid bias in MCTS. How to translate the 
+        #       policy distribution back from the symmetrical board state?
         p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
         # TODO: (feature add) split the policy into placement and capture and reshape them
 
@@ -174,8 +175,6 @@ class MCTS(object):
         #   temp is the temperature to control exploration/eploitation
         for _ in xrange(self.num_sim):
             state_copy = np.copy(state)
-            # TODO: (feature add) the sub-tree from the chosen action should be retained and
-            #       used for future actions
             self.simulate(state_copy)
 
         # Get list of actions from tree root and number of times each child has been visited
