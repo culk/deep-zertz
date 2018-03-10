@@ -33,4 +33,4 @@ class Config(object):
     num_sims = 10
 
     regularizer = 0.0001
-    num_residual_blocks = 5
+    num_residual_blocks = 3

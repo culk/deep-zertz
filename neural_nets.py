@@ -216,5 +216,9 @@ class ResNet(object):
         inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
         hidden = inputs
 
+        hidden = self.conv_bn_relu(num_filters=16, kernel_size=2, strides=1)
+        for i in range(self.config.num_residual_blocks):
+            # hidden = self.residual_block(num_filters=16, )
+            pass
 
 
