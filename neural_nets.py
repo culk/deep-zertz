@@ -172,7 +172,23 @@ class ResNet(object):
                          data_format='channels_first',
                          kernel_regularizer=l2(self.config.regularizer))(out)
 
-    def residual_block(self, ):
+
+    def short_cut(self, input, residual):
+        
+
+    def residual_block(self, num_filters, kernel_size, first_block=False, increase_dim=False):
+        def f(input):
+            if first_block:
+                out = Conv2D(filters=num_filters,
+                         kernel_size=kernel_size,
+                         strides=1,
+                         padding='same',
+                         data_format='channels_first',
+                         kernel_regularizer=l2(self.config.regularizer))(input)
+            else:
+                out = self.bn_conv_relu(num_filters=num_filters, kernel_size=kernel_size, strides=1 + int(1+increase_dim))(input)
+
+            out = self.bn_conv_relu(num_filters=num_filters, kernel_size=kernel_size, strides=1)(out)
 
 
 
