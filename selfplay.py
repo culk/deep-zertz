@@ -41,9 +41,11 @@ class SelfPlay(object):
                 new_examples = []
                 for e in examples:
                     if e[1] == 'PUT':
-                        new_examples.append((e[0],e[2], null_cap_pi, 1 if winner==player_value else -1, 1))
+                        new_examples.append((e[0], e[2], null_cap_pi, winner * e[3], 1))
                     else:
-                        new_examples.append((e[0], null_put_pi, e[2], 1 if winner==player_value else -1, 0))
+                        new_examples.append((e[0], null_put_pi, e[2], winner * e[3], 0))
+                #for e in new_examples:
+                    #print(np.sum(e[0][:2], axis=0), e[4], np.argmax(e[1]), np.argmax(e[2]), e[3])
                 return new_examples   
 
             if episode_step > 2000 and winner == 0:
@@ -75,8 +77,8 @@ class Arena(object):
                 action_type, actions, probs = self.player2.get_action_prob(state, temp=1)
 
             # TODO: replaced argmax with random sampling with temperature
-            action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
-            #action = actions[np.argmax(probs)]
+            #action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
+            action = actions[np.argmax(probs)]
 
             if logging:
                 print(np.sum(state[:2] + state[2], axis=0))
@@ -89,8 +91,8 @@ class Arena(object):
         player1_win, player2_win, draw = 0, 0, 0
         # Player1 is new model
         for t in xrange(num_games/2):
-            if t == 0 or t == 1:
-                winner = self.match(logging=True)
+            if t == 0:
+                winner = self.match(logging=False)
             else:
                 winner = self.match()
             if winner == 1:
