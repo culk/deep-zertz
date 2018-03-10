@@ -52,9 +52,9 @@ class LinearModel(object):
         self.v = Dense(1, activation='tanh', name='v')(hidden)
 
         self.model = Model(inputs=[inputs], outputs=[self.pi, self.v])
-
         self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'],
                            optimizer=Adam(self.config.lr))
+
 
 class DenseModel(object):
     '''
@@ -137,3 +137,5 @@ class ConvModel(object):
 
         self.model = Model(inputs=[inputs], outputs=[self.pi, self.v])
         self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=Adam(self.config.lr))
+
+

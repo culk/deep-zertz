@@ -19,14 +19,14 @@ class Config(object):
     kernel_size = 2
     dropout = 0.1
 
-    model = models[2]
+    model = models[0]
     checkpoint_folder = 'checkpoints'
     arena_games = 40
     arena_threshold = 0.55
     # Should be set in a way that encourages exploration in early moves and then 
     # selects optimal moves later in the game
     temp_threshold = 6
-    num_iters = 10
+    num_iters = 4
 
     num_episodes = 25
     c_puct = 1
