@@ -12,7 +12,6 @@ class Coach(object):
         self.config = config
         self.prev_model = self.model.__class__(self.game, self.config)
 
-
     def learn(self):
         for i in range(self.config.num_iters):
             self_play = SelfPlay(self.game, self.model)
@@ -66,4 +65,24 @@ class Coach(object):
     def getCheckpointFile(self, iteration):
         return 'checkpoint_' + str(iteration) + '.pth.tar'
 
+class Individual(Coach):
+    # Iteratively generate examples with self play and then train on those examples
+    def __init__(self, game, model, config):
+        self.game = game
+        self.model = model
+        self.config = config
+
+    def learn(self):
+        for i in range(self.config.num_iters):
+            # Step 1. Generate training examples by self play with current model
+            self_play = SelfPlay(self.game, self.model)
+            examples = []
+            for _ in range(self.config.num_episodes):
+                examples += self_play.generate_play_data()
+            examples = self.examples_to_array(examples)
+            examples = self.shuffle_examples(examples)
+
+            # Step 2. Train the model
+            self.model.train(examples)
+            self.model.save_checkpoint(filename=self.getCheckpointFile(i))
 
