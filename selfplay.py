@@ -17,24 +17,23 @@ class SelfPlay(object):
         episode_step = 0
         null_cap_pi = np.zeros(self.game.get_capture_action_size())
         null_put_pi = np.zeros(self.game.get_placement_action_size())
-        
         board_state, player_value = self.game.get_current_state()
 
         while True:
             episode_step += 1
-            self.mcts.reset()
+            #self.mcts.reset()
+
             # Set tempurature to 1 if current turn is less than the threshold
-            # TODO: Check if temp should be higher for ealier turns and then scale down
+            # TODO: (debugging) Check if temp should be higher for ealier turns and then scale down
             temp = int(episode_step < self.temp_threshold)
 
             action_type, actions, probs = self.mcts.get_action_prob(board_state, temp=temp)
             examples.append([board_state, action_type, probs, player_value])
 
             action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
+            self.mcts.move_root(action)
 
             board_state, player_value = self.game.get_next_state(action, action_type)
-            #print(action_type, action)
-            #print(self.game.board.state[0])
 
             winner = self.game.get_game_ended(board_state)
 
@@ -77,15 +76,15 @@ class Arena(object):
             self.player1.reset()
             self.player2.reset()
             state, player_value = self.game.get_current_state()
+
+            # Obtain the policy from the player's agent
             if player_value == 1: # if cur_player is player1
                 action_type, actions, probs = self.player1.get_action_prob(state, temp=1)
             else: # plaver_value == -1 and cur_player is player2
                 action_type, actions, probs = self.player2.get_action_prob(state, temp=1)
 
-            # TODO: replaced argmax with random sampling with temperature
-            #action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
+            # Choose the action greedily
             action = actions[np.argmax(probs)]
-
             if logging:
                 print(np.sum(state[:2] + state[2], axis=0))
                 print(player_value, action_type, action)

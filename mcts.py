@@ -22,7 +22,9 @@ class Node(object):
         Arguments:
         leaf_value -- the value of subtree evaluation from the current player's perspective.        
         """
+        # Update mean value of the state
         self.Q = (self.Q * self.N + predicted_v) / (self.N + 1.)
+        # Increment how many times the state has been visited
         self.N += 1
 
     def recurse_update(self, predicted_v):
@@ -62,6 +64,10 @@ class Node(object):
         for action, node in self.child.items():
             # TODO: (feature add) scale the prior probabilities for the root node based on the size
             #       of the typical action state space (page 14 AlphaZero paper).
+            # TODO: (debugging) create way to visualize the tree creation and test with different
+            #       values of c_puct. I'm worried that the simulation will take the same action
+            #       over and over again because the prior probabilities will be very low so as
+            #       soon as the Q value is set to a positive number it will trump all exploration.
             U = node.Q + c_puct * node.P * np.sqrt(self.N) / (1. + node.N)
             if U > max_u:
                 max_u = U
@@ -89,6 +95,12 @@ class MCTS(object):
 
     def reset(self):
         self.root = Node(None, 1.0, 1)
+
+    def move_root(self, action):
+        # TODO: (feature add) move the root of the tree whenever an action is taken instead
+        #       of throwing away the whole tree.
+        self.root = self.root.child[action]
+        self.root.parent = None
 
     def simulate(self, board_state):
         """
@@ -120,6 +132,7 @@ class MCTS(object):
         # TODO: (feature add) transform the board state to a random symmetry before predicting
         #       the policies and v. This helps avoid bias in MCTS.
         p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
+        # TODO: (feature add) split the policy into placement and capture and reshape them
 
         # Check if the leaf node is a game over state
         game_value = self.game.get_game_ended(board_state)
@@ -161,6 +174,8 @@ class MCTS(object):
         #   temp is the temperature to control exploration/eploitation
         for _ in xrange(self.num_sim):
             state_copy = np.copy(state)
+            # TODO: (feature add) the sub-tree from the chosen action should be retained and
+            #       used for future actions
             self.simulate(state_copy)
 
         # Get list of actions from tree root and number of times each child has been visited
@@ -176,9 +191,9 @@ class MCTS(object):
         else:
             # Exploration, assign some probability to less visited child nodes
             probs = np.array(visits, dtype=np.float32)**(1. / temp)
-            probs /= np.sum(probs)
             actions, probs = self.restore_action_matrix(actions, probs)
 
+        #probs /= np.sum(probs)
         return action_type, actions, probs
 
     def restore_action_matrix(self, actions, probs):
@@ -192,11 +207,13 @@ class MCTS(object):
         for index, p in zip(actions, probs):
             probs_full[index] = p
 
-        assert abs(np.sum(probs_full) - 1) < .0001
 
         z, y, x = probs_full.shape
         actions_full = [(i, j, k) for i in xrange(z) for j in xrange(y) for k in xrange(x)]
         probs_full = probs_full.flatten()
+        probs_full /= np.sum(probs_full)
+
+        assert abs(np.sum(probs_full) - 1) < .0001
 
         return actions_full, probs_full
 
