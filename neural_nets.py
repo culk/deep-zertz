@@ -216,5 +216,5 @@ class ResNet(object):
         inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
         hidden = inputs
 
-        
+
 
