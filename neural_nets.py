@@ -5,7 +5,7 @@ model
 from keras.layers import Input, Reshape, Dense, Conv2D, BatchNormalization, Activation, Flatten, Dropout, Lambda, Multiply
 from keras.models import Model
 from keras.optimizers import Adam
-import tensorflow as tf
+from keras.regularizers import l2
 
 '''
 # Possible alternate loss function
@@ -124,7 +124,8 @@ class ConvModel(object):
         hidden = inputs
 
         for i in range(self.config.num_layers):
-            hidden = Activation('relu')(BatchNormalization(axis=3)(Conv2D(self.config.num_filters,
+            # Changed axis to 1 since channels first
+            hidden = Activation('relu')(BatchNormalization(axis=1)(Conv2D(self.config.num_filters,
                                                                     self.config.kernel_size,
                                                                     padding='same',
                                                                     data_format='channels_first')(hidden)))
@@ -137,5 +138,25 @@ class ConvModel(object):
 
         self.model = Model(inputs=[inputs], outputs=[self.pi, self.v])
         self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=Adam(self.config.lr))
+
+
+class ResNet(object):
+    '''
+    ResNet!!
+    '''
+    def __init__(self, game, config):
+        self.config = config
+
+    def bn_relu(self, input):
+        norm = BatchNormalization(axis=1)(input)
+
+    def conv_bn_relu(self, num_filters, kernel_size, strides):
+        out = Conv2D(filters=num_filters,
+                     kernel_size=kernel_size,
+                     strides=strides,
+                     padding='same',
+                     data_format='channels_first',
+                     kernel_regularizer=l2(self.config.regularizer))
+
 
 

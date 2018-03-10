@@ -31,3 +31,5 @@ class Config(object):
     num_episodes = 25
     c_puct = 1
     num_sims = 10
+
+    regularizer = 0.0001
