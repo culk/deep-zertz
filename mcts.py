@@ -97,8 +97,6 @@ class MCTS(object):
         self.root = Node(None, 1.0, 1)
 
     def move_root(self, action):
-        # TODO: (feature add) move the root of the tree whenever an action is taken instead
-        #       of throwing away the whole tree.
         self.root = self.root.child[action]
         self.root.parent = None
 
@@ -111,7 +109,7 @@ class MCTS(object):
             state is a tuple of (board_state, player)
         """
         node = self.root
-        player_change = 1
+        player_change = -1
 
         while True:
             if node.is_leaf():
@@ -142,6 +140,7 @@ class MCTS(object):
             # No player has won, get action filters and expand the node with predicted probs
             p_placement = np.squeeze(p_placement)
             p_capture = np.squeeze(p_capture)
+            v = np.squeeze(v)
 
             # TODO: (debugging) debug custom loss
             if np.any(np.isnan(p_placement)):

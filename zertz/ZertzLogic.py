@@ -455,8 +455,6 @@ class Board():
         symmetries.append((0, self._get_mirror_symmetries()))
         symmetries.append((1, self._get_rotational_symmetries()))
         symmetries.append((2, self._get_rotational_symmetries(symmetries[0][1])))
-        # TODO: (feature add) assign each symmetry a number for action translation 
-        #       and return that number with the symmetry.
         return symmetries
 
     def mirror_action(self, action_type, translated):

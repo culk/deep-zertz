@@ -42,11 +42,9 @@ class SelfPlay(object):
             if winner != 0 or episode_step > 200:
                 # Once winner is known, update each example with value based on the current player
                 # If the game reaches turn 200 with no winner then it is a draw and value is 0
+                # TODO: clean this up...
                 new_examples = []
                 for e in examples:
-                    # TODO: (feature add) how to incorporate state symmetries without creating 
-                    #       multiple MCTS trees. Don't have an easy way of converting 
-                    #       probs/actions in a symmetrical way.
                     state = e[0]
                     v = winner * e[3]
                     if e[1] == 'PUT':
@@ -57,7 +55,34 @@ class SelfPlay(object):
                         p_placement = null_put_pi
                         p_capture = e[2]
                         action_type = 0
+                    #print(p_placement.shape)
+                    #print(p_capture.shape)
                     new_examples.append((state, p_placement, p_capture, v, action_type))
+
+                    # Add opponent symmetry
+                    opponent_state = np.copy(state)
+                    opponent_state[-1] = (opponent_state[-1] - 1) * -1
+                    new_examples.append((opponent_state, p_placement, p_capture, -v, action_type))
+
+                    # Add other symmetries
+                    for symmetry_type, state in self.game.get_symmetries(e[0]):
+                        if e[1] == 'PUT':
+                            p_placement = self.game.translate_action_symmetry(
+                                    e[1], symmetry_type, e[2]).flatten()
+                            p_capture = null_cap_pi
+                            action_type = 1
+                        else:
+                            p_placement = null_put_pi
+                            p_capture = self.game.translate_action_symmetry(
+                                    e[1], symmetry_type, e[2]).flatten()
+                            action_type = 0
+                        #print(p_placement.shape)
+                        #print(p_capture.shape)
+                        new_examples.append((state, p_placement, p_capture, v, action_type))
+                        opponent_state = np.copy(state)
+                        opponent_state[-1] = (opponent_state[-1] - 1) * -1
+                        new_examples.append((opponent_state, p_placement, p_capture, -v, action_type))
+                        
                 return new_examples   
 
 class Arena(object):

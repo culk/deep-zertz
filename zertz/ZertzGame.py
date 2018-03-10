@@ -154,7 +154,7 @@ class ZertzGame():
             temp_game = ZertzGame(clone=self, clone_state=cur_state)
             return temp_game.get_game_ended()
 
-    def get_symmetries(self):
+    def get_symmetries(self, cur_state=None):
         # There are many symmetries in Zertz
         # First, there are rotational symmetry in that every board position can be rotated in
         # six different ways
@@ -164,11 +164,20 @@ class ZertzGame():
         # original space.
         # Total board symmetries = 6 * 2 * (# of shift symmetries)
         # Total implemented currently = 4
-        symmetries = self.board.get_state_symmetries()
+        if cur_state is None:
+            symmetries = self.board.get_state_symmetries()
+        else:
+            temp_game = ZertzGame(clone=self, clone_state=cur_state)
+            symmetries = temp_game.get_symmetries()
         return symmetries
 
     def translate_action_symmetry(self, action_type, symmetry, actions):
         translated = np.copy(actions)
+        if len(translated.shape) != 3:
+            if action_type == 'PUT':
+                translated = translated.reshape(self.get_placement_action_shape())
+            elif action_type == 'CAP':
+                translated = translated.reshape(self.get_capture_action_shape())
         if symmetry == 0: # mirror
             translated = self.board.mirror_action(action_type, translated)
         elif symmetry == 1: # rotated
