@@ -2,6 +2,8 @@
 This file is a wrapper of the models including functions for training and evaluation
 '''
 from neural_nets import LinearModel, DenseModel, ConvModel
+from keras.callbacks import LearningRateScheduler
+import keras.backend as K
 import numpy as np
 import os
 
@@ -37,7 +39,7 @@ class NNetWrapper(object):
         self.capture_action_size = game.get_capture_action_size()
 
 
-    def train(self, examples):
+    def train(self, examples, i):
         '''
         :param examples: (state, pi_put, pi_capture, v) a tuple
                 state size=(num_examples, board_x, board_y, state_depth)
@@ -45,6 +47,8 @@ class NNetWrapper(object):
                 pi_capture size = (num_examples, capture_pi_size[0] * capture_pi_size[1])
                 v size = (num_examples, 1)
                 is_put = (num_examples, 1) binary array indicating if capture is valid for each example
+
+        :params i: iter number
         :return:
         '''
         input_states, target_pi, target_vs = examples
@@ -56,10 +60,16 @@ class NNetWrapper(object):
         target_put_pis = np.asarray(target_pi)
         target_vs = np.asarray(target_vs)
 
+        if i == self.config.num_iters * 0.5:
+            curr_lr = K.get_value(self.nnet.model.optimizer.lr)
+            K.set_value(self.nnet.model.optimizer.lr, curr_lr * 0.1)
+            print "Learning rate decayed!"
+
         self.nnet.model.fit(
                 x={'inputs':input_states},
                 y=[target_pi, target_vs],
                 batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
+        
 
     def predict(self, states, is_put):
 

@@ -74,6 +74,7 @@ class Individual(Coach):
 
     def learn(self):
         for i in range(self.config.num_iters):
+            print 'Staring the %i th iteration...' %i
             # Step 1. Generate training examples by self play with current model
             self_play = SelfPlay(self.game, self.model)
             examples = []
@@ -83,6 +84,6 @@ class Individual(Coach):
             examples = self.shuffle_examples(examples)
 
             # Step 2. Train the model
-            self.model.train(examples)
+            self.model.train(examples, i)
             self.model.save_checkpoint(filename=self.getCheckpointFile(i))
 
