@@ -1,4 +1,4 @@
-from retrain import Coach
+from retrain import Coach, Individual
 from zertz.ZertzGame import ZertzGame as Game
 from model import NNetWrapper as NN
 from config import Config
@@ -12,10 +12,10 @@ if __name__ == '__main__':
     game = Game(rings, marbles, win_con, t)
     config = Config()
     nnet = NN(game, config)
-    coach = Coach(game, nnet, config)
+    trainer = Individual(game, nnet, config)
 
     # load model weights?
 
     # learn
-    coach.learn()
+    trainer.learn()
 
