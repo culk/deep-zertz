@@ -5,6 +5,7 @@ from neural_nets import LinearModel, DenseModel, ConvModel
 import keras.backend as K
 import numpy as np
 import os
+from keras.callbacks import CSVLogger
 
 class NNetWrapper(object):
     def __init__(self, game, config):
@@ -64,10 +65,17 @@ class NNetWrapper(object):
             K.set_value(self.nnet.model.optimizer.lr, curr_lr * 0.1)
             print "Learning rate decayed!"
 
+        if not os.path.exists('results'):
+            print("Checkpoint Directory does not exist! Making directory {}".format('results'))
+            os.mkdir('results')
+
+        csv_logger = CSVLogger('results/log_%i.csv'%i, append=True, separator=',')
+
         self.nnet.model.fit(
                 x={'inputs':input_states},
                 y=[target_pi, target_vs],
-                batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1)
+                batch_size=self.config.batch_size, epochs=self.config.epochs, verbose=1,
+            callbacks=[csv_logger])
         
 
     def predict(self, states, is_put):
