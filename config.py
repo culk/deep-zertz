@@ -7,18 +7,18 @@ class Config(object):
     """
     models = ['linear', 'dense', 'conv']
 
-    hidden_size = 200
+    hidden_size = 10
     lr = 0.001
 
     batch_size = 20
     epochs = 10
 
-    num_layers = 2
+    num_layers = 5
     num_filters = 32
     kernel_size = 2
     dropout = 0.1
 
-    model = models[2]
+    model = models[0]
     checkpoint_folder = 'checkpoints'
     arena_games = 40
     arena_threshold = 0.55
@@ -27,6 +27,6 @@ class Config(object):
 
     custom_loss = False
 
-    num_episodes = 20
+    num_episodes = 25
     c_puct = 1
     num_sims = 10

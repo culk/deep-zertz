@@ -5,8 +5,8 @@ from config import Config
 
 if __name__ == '__main__':
     rings = 19
-    marbles = {'w': 20, 'g': 0, 'b': 0}
-    win_con = [{'w': 2}]
+    marbles = {'w': 20, 'g': 20, 'b': 0}
+    win_con = [{'w': 2}, {'g': 3}]
     t = 2
 
     game = Game(rings, marbles, win_con, t)
