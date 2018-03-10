@@ -23,10 +23,11 @@ class SelfPlay(object):
         while True:
             episode_step += 1
             self.mcts.reset()
+            # Set tempurature to 1 if current turn is less than the threshold
+            # TODO: Check if temp should be higher for ealier turns and then scale down
             temp = int(episode_step < self.temp_threshold)
 
             action_type, actions, probs = self.mcts.get_action_prob(board_state, temp=temp)
-            # TODO: make sure exmples format compatible with training input format
             examples.append([board_state, action_type, probs, player_value])
 
             action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
@@ -37,19 +38,23 @@ class SelfPlay(object):
 
             winner = self.game.get_game_ended(board_state)
 
-            if winner != 0:
+            if winner != 0 or episode_step > 200:
+                # Once winner is known, update each example with value based on the current player
+                # If the game reaches turn 200 with no winner then it is a draw and value is 0
                 new_examples = []
                 for e in examples:
+                    state = e[0]
+                    v = winner * e[3]
                     if e[1] == 'PUT':
-                        new_examples.append((e[0], e[2], null_cap_pi, winner * e[3], 1))
+                        p_placement = e[2]
+                        p_capture = null_cap_pi
+                        action_type = 1
                     else:
-                        new_examples.append((e[0], null_put_pi, e[2], winner * e[3], 0))
-                #for e in new_examples:
-                    #print(np.sum(e[0][:2], axis=0), e[4], np.argmax(e[1]), np.argmax(e[2]), e[3])
+                        p_placement = null_put_pi
+                        p_capture = e[2]
+                        action_type = 0
+                    new_examples.append((state, p_placement, p_capture, v, action_type))
                 return new_examples   
-
-            if episode_step > 2000 and winner == 0:
-                return self.generate_play_data()
 
 class Arena(object):
     def __init__(self, game, player_agent1, player_agent2):
