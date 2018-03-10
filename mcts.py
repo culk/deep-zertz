@@ -4,7 +4,7 @@ class Node(object):
     """ A class that represents a node in MC search tree. 
     A should include the following attributes:
         N: the number of times this node has been selected from its parents
-        Q: the mean value of this staet
+        Q: the mean value of this state
         P: the prior probability of selecting this node (ie. taking this action)
     """
     def __init__(self, parent, P, cur_player):
@@ -47,16 +47,6 @@ class Node(object):
         assert abs(np.sum(predicted_p) - 1) < .0001
 
         self.action_type = action_type
-        #predicted_p = predicted_p.squeeze()
-        '''
-        z, y, x = predicted_p.shape
-        for i in xrange(z):
-            for j in xrange(y):
-                for k in xrange(x):
-                    action = (i, j, k)
-                    prob = predicted_p[action]
-                    if action not in self.child and prob > 0:
-        '''
         for action in zip(*np.where(predicted_p > 0)):
             prob = predicted_p[action]
             self.child[action] = Node(self, prob, player_change*self.cur_player)
@@ -125,6 +115,8 @@ class MCTS(object):
             action_filter = 0
 
         # Predict the action probabilities using the nnet, filtering for the action type
+        # TODO: (feature add) transform the board state to a random symmetry before predicting
+        #       the policies and v. This helps avoid bias in MCTS.
         p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
 
         # Check if the leaf node is a game over state
@@ -135,7 +127,7 @@ class MCTS(object):
             p_placement = np.squeeze(p_placement)
             p_capture = np.squeeze(p_capture)
 
-            # TODO: debug custom loss
+            # TODO: (debugging) debug custom loss
             if np.any(np.isnan(p_placement)):
                 import pdb; pdb.set_trace()
             if np.any(np.isnan(p_capture)):
@@ -176,14 +168,12 @@ class MCTS(object):
 
         if temp == 0:
             # Exploitation, recommend the action that has the highest visit count
-            probs = np.zeros_like(visits)
-            probs[np.argmax(visits)] = 1
+            probs = np.zeros(len(visits), dtype=np.float32)
+            probs[np.argmax(visits)] = 1.0
             actions, probs = self.restore_action_matrix(actions, probs)
         else:
             # Exploration, assign some probability to less visited child nodes
-            probs = np.array(visits)**(1. / temp)
-            #probs = [x**(1./temp) for x in visits]
-            #probs = [x/float(sum(counts)) for x in counts]
+            probs = np.array(visits, dtype=np.float32)**(1. / temp)
             probs /= np.sum(probs)
             actions, probs = self.restore_action_matrix(actions, probs)
 
@@ -204,7 +194,7 @@ class MCTS(object):
 
         z, y, x = probs_full.shape
         actions_full = [(i, j, k) for i in xrange(z) for j in xrange(y) for k in xrange(x)]
-        probs_full = list(probs_full.flatten())
+        probs_full = probs_full.flatten()
 
         return actions_full, probs_full
 
