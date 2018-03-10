@@ -181,7 +181,7 @@ class ResNet(object):
         rate = int(input_shape[2] / residual_shape[2])
 
         if input_shape != residual_shape:
-            shortcut = Conv2D(filters=residual_shape[1],
+            shortcut = Conv2D(filters=residual_shape[0],
                          kernel_size=1,
                          strides=rate,
                          padding='valid',
@@ -212,8 +212,9 @@ class ResNet(object):
         self.state_depth, self.board_x, self.board_y = self.game.board.state.shape
         self.put_action_size = self.game.get_placement_action_size()
         self.capture_action_size = self.game.get_capture_action_size()
-        
+
         inputs = Input(shape=(self.state_depth, self.board_x, self.board_y), name="inputs")
         hidden = inputs
 
+        
 
