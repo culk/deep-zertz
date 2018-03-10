@@ -431,16 +431,16 @@ class Board():
 
     def _get_rotational_symmetries(self, state=None):
         # Rotate the board 180 degrees
-        if state is not None:
+        if state is None:
             rotated_state = np.copy(self.state)
         else:
-            rotate_state = np.copy(state)
-        rotated_state = np.rot90(np.rot90(rotate_state, axes=(1, 2)), axes=(1, 2))
-        return rotate_state
+            rotated_state = np.copy(state)
+        rotated_state = np.rot90(np.rot90(rotated_state, axes=(1, 2)), axes=(1, 2))
+        return rotated_state
 
     def _get_mirror_symmetries(self, state=None):
         # Flip the board while maintaining adjacency
-        if state is not None:
+        if state is None:
             mirror_state = np.copy(self.state)
         else:
             mirror_state = np.copy(state)
@@ -452,14 +452,81 @@ class Board():
     def get_state_symmetries(self):
         # Return a list of symmetrical states by mirroring and rotating the board
         symmetries = []
-        symmetries.append(self._get_mirror_symmetries())
-        symmetries.append(self._get_rotational_symmetries())
-        symmetries.append(self._get_rotational_symmetries(symmetries[0]))
+        symmetries.append((0, self._get_mirror_symmetries()))
+        symmetries.append((1, self._get_rotational_symmetries()))
+        symmetries.append((2, self._get_rotational_symmetries(symmetries[0][1])))
         # TODO: (feature add) assign each symmetry a number for action translation 
         #       and return that number with the symmetry.
         return symmetries
 
-    def translate_actions(self, action_type, actions, symmetry):
-        # TODO: Return a new action matrix with all actions shifted based on the symmetry
-        pass
+    def mirror_action(self, action_type, translated):
+        if action_type == 'CAP':
+            # swap capture direction axes
+            temp = np.copy(translated)
+            translated[3], translated[1] = temp[1], temp[3]
+            translated[4], translated[0] = temp[0], temp[4]
+
+            # transpose location axes
+            d = translated.shape[0]
+            for i in xrange(d):
+                translated[i] = translated[i].T
+
+        elif action_type == 'PUT':
+            temp = np.copy(translated)
+            _, put, rem = translated.shape
+            for p in xrange(put):
+                # Translate the put index
+                put_y, put_x = p / self.width, p % self.width
+                new_p = put_x * self.width + put_y
+                for r in xrange(rem - 1):
+                    # Translate the rem index
+                    rem_y, rem_x = r / self.width, r % self.width
+                    new_r = rem_x * self.width + rem_y
+                    translated[:, new_p, new_r] = temp[:, p, r]
+
+                # The last rem index is the same
+                translated[:, new_p, rem - 1] = translated[:, new_p, rem - 1]
+
+        return translated
+
+    def rotate_action(self, action_type, translated):
+
+        mid = self.width / 2 # board width must be odd
+        if action_type == 'CAP':
+            # swap capture direction axes
+            temp = np.copy(translated)
+            translated[3], translated[0] = temp[0], temp[3]
+            translated[4], translated[1] = temp[1], temp[4]
+            translated[5], translated[2] = temp[2], temp[5]
+
+            # rotate location axes
+            temp = np.copy(translated)
+            _, y, x = temp.shape
+            for i in xrange(y):
+                new_i = mid + (mid - i)
+                for j in xrange(x):
+                    new_j = mid + (mid - j)
+                    translated[:, new_i, new_j] = temp[:, i, j]
+
+        if action_type == 'PUT':
+            temp = np.copy(translated)
+            _, put, rem = translated.shape
+            for p in xrange(put):
+                # Translate the put index
+                put_y, put_x = p / self.width, p % self.width
+                put_y = mid + (mid - put_y)
+                put_x = mid + (mid - put_x)
+                new_p = put_y * self.width + put_x
+                for r in xrange(rem - 1):
+                    # Translate the rem index
+                    rem_y, rem_x = r / self.width, r % self.width
+                    rem_y = mid + (mid - rem_y)
+                    rem_x = mid + (mid - rem_x)
+                    new_r = rem_y * self.width + rem_x
+                    translated[:, new_p, new_r] = temp[:, p, r]
+
+                # The last rem index is the same
+                translated[:, new_p, rem - 1] = translated[:, new_p, rem - 1]
+
+        return translated
 

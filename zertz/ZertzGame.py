@@ -167,3 +167,23 @@ class ZertzGame():
         symmetries = self.board.get_state_symmetries()
         return symmetries
 
+    def translate_action_symmetry(self, action_type, symmetry, actions):
+        translated = np.copy(actions)
+        if symmetry == 0: # mirror
+            translated = self.board.mirror_action(action_type, translated)
+        elif symmetry == 1: # rotated
+            translated = self.board.rotate_action(action_type, translated)
+        elif symmetry == 2: # mirror/rotated
+            translated = self.board.mirror_action(action_type, translated)
+            translated = self.board.rotate_action(action_type, translated)
+        elif symmetry == 3: # opponent
+            pass
+        elif symmetry == 4: # opponent mirror
+            pass
+        elif symmetry == 5: # opponent rotated
+            pass
+        elif symmetry == 6: # opponent mirror/rotated
+            pass
+        return translated
+
+

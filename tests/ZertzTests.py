@@ -187,6 +187,52 @@ class TestZertzLogic(unittest.TestCase):
         self.assertEqual(board.state[8, 0, 0], 0)
         self.assertEqual(board.state[11, 0, 0], 2)
 
+    def test_translated_action(self):
+        print('')
+        board = Board(19)
+        # Take some actions
+        #(('PUT', 'w', (4, 4)), ('REM', (4, 3)))
+        board.take_action((0, 24, 23), 'PUT')
+        symmetries = board.get_state_symmetries()
+        # Test the placement actions
+        for i in xrange(3):
+            symmetry = Board(19)
+            symmetry.state = symmetries[i][1]
+            valid_placement = symmetry.get_placement_moves()
+            if i == 0:
+                symmetry_placement = board.mirror_action('PUT', board.get_placement_moves())
+            elif i == 1:
+                symmetry_placement = board.rotate_action('PUT', board.get_placement_moves())
+            elif i == 2:
+                symmetry_placement = board.rotate_action('PUT', board.get_placement_moves())
+                symmetry_placement = board.mirror_action('PUT', symmetry_placement)
+            self.assertTrue(np.all(valid_placement == symmetry_placement))
+        #(('PUT', 'b', (3, 4)), ('REM', (4, 2)))
+        board.take_action((2, 19, 22), 'PUT')
+        # Now get the board to a capture state
+        #(('PUT', 'g', (2, 3)), ('REM', (1, 3)))
+        board.take_action((1, 13, 8), 'PUT')
+        #(('PUT', 'b', (1, 1)), ('REM', (3, 1)))
+        board.take_action((2, 6, 16), 'PUT')
+        #(('PUT', 'b', (2, 1)), ('REM', (0, 2)))
+        board.take_action((2, 11, 2), 'PUT')
+        #(('PUT', 'w', (3, 3)), ('REM', (0, 0)))
+        board.take_action((0, 18, 0), 'PUT')
+        symmetries = board.get_state_symmetries()
+        # Test the capture actions
+        for i in xrange(3):
+            symmetry = Board(19)
+            symmetry.state = symmetries[i][1]
+            valid_capture = symmetry.get_capture_moves()
+            if i == 0:
+                symmetry_capture = board.mirror_action('CAP', board.get_capture_moves())
+            elif i == 1:
+                symmetry_capture = board.rotate_action('CAP', board.get_capture_moves())
+            elif i == 2:
+                symmetry_capture = board.rotate_action('CAP', board.get_capture_moves())
+                symmetry_capture = board.mirror_action('CAP', symmetry_capture)
+            self.assertTrue(np.all(valid_capture == symmetry_capture))
+
 class TestZertzGame(unittest.TestCase):
     def test_init(self):
         game = ZertzGame(19)
@@ -261,14 +307,14 @@ class TestZertzGame(unittest.TestCase):
     def test_take_422(self):
         game = ZertzGame(19)
         game.get_next_state((0, 11, 5), 'PUT')
-        print('')
-        print(np.sum(game.board.state[:2], axis=0))
+        #print('')
+        #print(np.sum(game.board.state[:2], axis=0))
         game.get_next_state((0, 8, 24), 'PUT')
-        print(np.sum(game.board.state[:2], axis=0))
+        #print(np.sum(game.board.state[:2], axis=0))
         game.get_next_state((0, 12, 22), 'PUT')
-        print(np.sum(game.board.state[:2], axis=0))
+        #print(np.sum(game.board.state[:2], axis=0))
         game.get_next_state((4, 2, 1), 'CAP')
-        print(np.sum(game.board.state[:2], axis=0))
+        #print(np.sum(game.board.state[:2], axis=0))
 
     def test_game_end(self):
         game = ZertzGame(1)
