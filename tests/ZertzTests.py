@@ -188,7 +188,6 @@ class TestZertzLogic(unittest.TestCase):
         self.assertEqual(board.state[11, 0, 0], 2)
 
     def test_translated_action(self):
-        print('')
         board = Board(19)
         # Take some actions
         #(('PUT', 'w', (4, 4)), ('REM', (4, 3)))
@@ -239,6 +238,13 @@ class TestZertzLogic(unittest.TestCase):
         moves = ['A1', 'A4', 'B4', 'C2', 'D3', 'G4', 'G1']
         for index, move in zip(indices, moves):
             self.assertEqual(index, board.str_to_index(move))
+
+    def test_str_to_index(self):
+        board = Board(37)
+        indices = [(3, 0), (0, 0), (1, 1), (4, 2), (4, 3), (3, 6), (6, 6)]
+        moves = ['A1', 'A4', 'B4', 'C2', 'D3', 'G4', 'G1']
+        for index, move in zip(indices, moves):
+            self.assertEqual(move, board.index_to_str(index))
 
 class TestZertzGame(unittest.TestCase):
     def test_init(self):
@@ -342,6 +348,31 @@ class TestZertzGame(unittest.TestCase):
                    ('PUT', (1, 12, 25)), ('PUT', (1, 24, 23))]
         for action, action_str in zip(actions, action_strs):
             self.assertEqual(action, game.str_to_action(action_str))
+        action_strs = ['CAP b C4 g C2', 'CAP w C1 b C3', 'CAP g C1 b A1',
+                       'CAP b D4 w B3', 'CAP w A3 w C3', 'CAP b C2 w E2']
+        actions = [('CAP', (0, 1, 2)), ('CAP', (3, 4, 2)), ('CAP', (2, 4, 2)),
+                   ('CAP', (1, 1, 3)), ('CAP', (5, 0, 0)), ('CAP', (4, 3, 2))]
+        for action, action_str in zip(actions, action_strs):
+            self.assertEqual(action, game.str_to_action(action_str))
+
+    def test_str_to_action(self):
+        game = ZertzGame(19)
+        action_strs = ['PUT w A3 C5', 'PUT g A2 B4', 'PUT b A1 A3',
+                   'PUT g C3', 'PUT g E1 D1']
+        actions = [('PUT', (0, 0, 2)), ('PUT', (1, 5, 1)), ('PUT', (2, 10, 0)),
+                   ('PUT', (1, 12, 25)), ('PUT', (1, 24, 23))]
+        for action, action_str in zip(actions, action_strs):
+            self.assertEqual(action_str, game.action_to_str('PUT', action[1]))
+        game.get_next_state((2, 7, 25), 'PUT')
+        game.get_next_state((1, 12, 25), 'PUT')
+        # Only first capture action has actual marbels to check the marble types against.
+        # The other will default to 'w' marbles because they are blank rings.
+        action_strs = ['CAP b C4 g C2', 'CAP w C1 w C3', 'CAP w C1 w A1',
+                       'CAP w D4 b B3', 'CAP w A3 w C3', 'CAP w C2 w E2']
+        actions = [('CAP', (0, 1, 2)), ('CAP', (3, 4, 2)), ('CAP', (2, 4, 2)),
+                   ('CAP', (1, 1, 3)), ('CAP', (5, 0, 0)), ('CAP', (4, 3, 2))]
+        for action, action_str in zip(actions, action_strs):
+            self.assertEqual(action_str, game.action_to_str('CAP', action[1]))
 
         
 if __name__ == '__main__':

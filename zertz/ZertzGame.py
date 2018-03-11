@@ -217,15 +217,55 @@ class ZertzGame():
                 rem = self.board.width**2
             action = (layer, put, rem)
         elif action_type == 'CAP':
-            # TODO: 
-            pass
+            if len(args) == 5:
+                _a, src_str, _b, dst_str = args[1:]
+            else:
+                return '', None
+            src = self.board.str_to_index(src_str)
+            dst = self.board.str_to_index(dst_str)
+            cap = self.board._get_middle_ring(src, dst)
+            neighbors = self.board._get_neighbors(src)
+            direction = neighbors.index(cap)
+            action = (direction, src[0], src[1])
         else:
             action = None
         return action_type, action
 
     def action_to_str(self, action_type, action):
-        # TODO: 
-        pass
+        action_str = action_type + ' '
+        if action_type == 'PUT':
+            marble_type, put, rem = action
+            marble_type = self.board._LAYER_TO_MARBLE[marble_type + 1]
+
+            put_index = (put / self.board.width, put % self.board.width)
+            put_str = self.board.index_to_str(put_index)
+
+            if rem == self.board.width**2:
+                rem_str = ''
+            else:
+                rem_index = rem / self.board.width, rem % self.board.width
+                rem_str = self.board.index_to_str(rem_index)
+
+            action_str = "{} {} {} {}".format(
+                    action_type, marble_type, put_str, rem_str).rstrip()
+
+        elif action_type == 'CAP':
+            direction, y, x = action
+            src = (y, x)
+            src_marble = self.board._get_marble_type_at(src)
+            src_str = self.board.index_to_str(src)
+
+            dy, dx = self.board._DIRECTIONS[direction]
+            cap = (y + dy, x + dx)
+            cap_marble = self.board._get_marble_type_at(cap)
+
+            dst = self.board._get_jump_dst(src, cap)
+            dst_str = self.board.index_to_str(dst)
+
+            action_str = "{} {} {} {} {}".format(
+                    action_type, src_marble, src_str, cap_marble, dst_str)
+
+        return action_str
 
     def print_state(self):
         # TODO: 

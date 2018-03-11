@@ -529,20 +529,32 @@ class Board():
         return translated
 
     def str_to_index(self, index_str):
-        # Given a string like 'A1' return an index based on the board shape
+        # Given a string like 'A1' return an index (y, x) based on the board shape
         letter, number = index_str
 
         # Calculate x
         letter = letter.upper()
-        x = ord(letter) - 65
+        x = ord(letter) - 65 # ord('A') == 65
 
         # Calculate y
         mid = self.width // 2
-        number = int(number) - 1
-        offset = mid - x
-        if offset < 0:
-            offset = 0
-        y = (self.width - 1) - (number + offset)
+        number = int(number)
+        offset = max(mid - x, 0)
+        y = (self.width) - (number + offset)
 
         return y, x
+
+    def index_to_str(self, index):
+        # Given an index (y, x) return a string like 'A1' based on the board shape
+        y, x = index
+
+        # Calculate letter
+        letter = chr(x + 65) # chr(65) == 'A'
+
+        # Calculate number
+        mid = self.width // 2
+        offset = max(mid - x, 0)
+        number = str((self.width) - (y + offset))
+        
+        return letter + number
 
