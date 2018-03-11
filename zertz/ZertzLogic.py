@@ -539,7 +539,9 @@ class Board():
         # Calculate y
         mid = self.width // 2
         number = int(number) - 1
-        offset = abs(mid - x)
+        offset = mid - x
+        if offset < 0:
+            offset = 0
         y = (self.width - 1) - (number + offset)
 
         return y, x

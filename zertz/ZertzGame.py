@@ -196,11 +196,38 @@ class ZertzGame():
         return translated
 
     def str_to_action(self, action_str):
-        pass
+        # Translate action [i.e. 'PUT w A1 B2' or 'CAP b C4 g C2']
+        args = action_str.split()
+        action_type = args[0]
+        if action_type == 'PUT':
+            if len(args) == 4:
+                marble_type, put_str, rem_str = args[1:]
+            elif len(args) == 3:
+                marble_type, put_str = args[1:]
+                rem_str = None
+            else:
+                return '', None
+            layer = self.board._MARBLE_TO_LAYER[marble_type] - 1
+            y, x = self.board.str_to_index(put_str)
+            put = y * self.board.width + x
+            if rem_str is not None:
+                y, x = self.board.str_to_index(rem_str)
+                rem = y * self.board.width + x
+            else:
+                rem = self.board.width**2
+            action = (layer, put, rem)
+        elif action_type == 'CAP':
+            # TODO: 
+            pass
+        else:
+            action = None
+        return action_type, action
 
     def action_to_str(self, action_type, action):
+        # TODO: 
         pass
 
     def print_state(self):
+        # TODO: 
         pass
 

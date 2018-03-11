@@ -235,8 +235,8 @@ class TestZertzLogic(unittest.TestCase):
 
     def test_str_to_index(self):
         board = Board(37)
-        indices = [(3, 0), (1, 1), (4, 2), (4, 3), (3, 6), (0, 6)]
-        moves = ['A1', 'B4', 'C2', 'D3', 'G1', 'G4']
+        indices = [(3, 0), (0, 0), (1, 1), (4, 2), (4, 3), (3, 6), (6, 6)]
+        moves = ['A1', 'A4', 'B4', 'C2', 'D3', 'G4', 'G1']
         for index, move in zip(indices, moves):
             self.assertEqual(index, board.str_to_index(move))
 
@@ -333,6 +333,15 @@ class TestZertzGame(unittest.TestCase):
         game.board.state[11] += 4
         game.board.state[5] -= 4
         self.assertEqual(game.get_game_ended(), -1)
+
+    def test_str_to_action(self):
+        game = ZertzGame(19)
+        action_strs = ['PUT w A3 C5', 'PUT g A2 B4', 'PUT b A1 A3',
+                   'PUT g C3', 'PUT g E1 D1']
+        actions = [('PUT', (0, 0, 2)), ('PUT', (1, 5, 1)), ('PUT', (2, 10, 0)),
+                   ('PUT', (1, 12, 25)), ('PUT', (1, 24, 23))]
+        for action, action_str in zip(actions, action_strs):
+            self.assertEqual(action, game.str_to_action(action_str))
 
         
 if __name__ == '__main__':
