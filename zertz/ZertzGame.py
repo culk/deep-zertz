@@ -195,4 +195,12 @@ class ZertzGame():
             pass
         return translated
 
+    def str_to_action(self, action_str):
+        pass
+
+    def action_to_str(self, action_type, action):
+        pass
+
+    def print_state(self):
+        pass
 

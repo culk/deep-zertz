@@ -1,4 +1,5 @@
 from copy import deepcopy
+import random
 import numpy as np
 
 from mcts import MCTS
@@ -148,4 +149,70 @@ class Arena(object):
                 draw += 1
 
         return player1_win, player2_win, draw
+
+class HumanPlay(object):
+    def __init__(self, game, ai_agent):
+        """
+        ai_agent is a MCTS with a trained neural network
+        """
+        self.game = game
+        self.ai = ai_agent
+        self.player = ['Human', 'AI']
+        self.cur_player = 0
+
+    def match(self):
+        """
+        Game loop between ai player and human
+        """
+        self.game.print_state()
+
+        while self.game.get_game_ended() == 0:
+            # Get current player's action
+            if self.player[self.cur_player] == 'AI':
+                action_type, actions, probs = self.ai.get_action_prob(state, temp=0)
+                action = actions[np.argmax(probs)]
+                action_log = self.game.action_to_str(action_type, action)
+                # Print the action taken
+                print "{}:\t {}".format(self.player[self.cur_player], action_log)
+            else:
+                while True:
+                    action_str = input("Enter action [i.e. 'PUT w A1 B2' or 'CAP b C4 g C2']\n"
+                            + "{}:\t ".format(self.player[self.cur_player]))
+                    action_type, action = self.game.str_to_action(action_str)
+                    if action_type == 'PUT':
+                        if self.game.get_placement_action()[action]:
+                            break
+                    else:
+                        if self.game.get_capture_action()[action]:
+                            break
+                    print "Invalid action: {}".format(action_str)
+
+            # Apply the action
+            self.game.get_next_state(action, action_type)
+
+            # Update the board
+            self.game.print_state()
+        
+        return self.game.get_game_ended()
+
+    def play(self):
+        # Reset the board and ai state
+        self.game.reset_board()
+        self.ai.reset()
+
+        # Determine who plays first
+        first = input("Who plays first? ['h' = human, 'a' = ai, 'r' = random]")
+        if first == 'a':
+            self.player = ['AI', 'Human']
+        elif first == 'r':
+            self.player = random.shuffle(self.player)
+
+        # Play the game
+        game_value = self.match()
+
+        # Print out the winner
+        if game_value == 1:
+            print "{} Player Wins!".format(self.player[0])
+        else:
+            print "{} Player Wins!".format(self.player[1])
 
