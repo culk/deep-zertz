@@ -215,7 +215,7 @@ class HumanPlay(object):
         if first == 'a':
             self.player = ['AI', 'Human']
         elif first == 'r':
-            self.player = random.shuffle(self.player)
+            random.shuffle(self.player)
 
         # Play the game
         game_value = self.match()

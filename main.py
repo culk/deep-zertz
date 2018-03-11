@@ -1,4 +1,6 @@
 from retrain import Coach, Individual
+from selfplay import HumanPlay
+from mcts import MCTS
 from zertz.ZertzGame import ZertzGame as Game
 from model import NNetWrapper as NN
 from config import Config
@@ -18,4 +20,9 @@ if __name__ == '__main__':
 
     # learn
     trainer.learn()
+
+    # play against AI
+    #ai_agent = MCTS(game, nnet, config.c_puct, config.num_sims)
+    #hp = HumanPlay(game, ai_agent)
+    #hp.play()
 
