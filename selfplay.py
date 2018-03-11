@@ -169,6 +169,7 @@ class HumanPlay(object):
         while self.game.get_game_ended() == 0:
             # Get current player's action
             if self.player[self.cur_player] == 'AI':
+                state, _ = self.game.get_current_state()
                 action_type, actions, probs = self.ai.get_action_prob(state, temp=0)
                 action = actions[np.argmax(probs)]
                 action_log = self.game.action_to_str(action_type, action)
@@ -176,22 +177,31 @@ class HumanPlay(object):
                 print "{}:\t {}".format(self.player[self.cur_player], action_log)
             else:
                 while True:
-                    action_str = input("Enter action [i.e. 'PUT w A1 B2' or 'CAP b C4 g C2']\n"
+                    action_str = raw_input("Enter action [i.e. 'PUT w A1 B2' or 'CAP b C4 g C2']\n"
                             + "{}:\t ".format(self.player[self.cur_player]))
-                    action_type, action = self.game.str_to_action(action_str)
-                    if action_type == 'PUT':
-                        if self.game.get_placement_action()[action]:
+                    try:
+                        action_type, action = self.game.str_to_action(action_str)
+                    except:
+                        action_type = ''
+                        action = None
+                    if action_type == 'PUT' and action is not None:
+                        if self.game.get_valid_actions()[0][action]:
                             break
-                    else:
-                        if self.game.get_capture_action()[action]:
+                    elif action_type == 'CAP' and action is not None:
+                        if self.game.get_valid_actions()[1][action]:
                             break
                     print "Invalid action: {}".format(action_str)
 
             # Apply the action
             self.game.get_next_state(action, action_type)
+            self.ai.move_root(action)
 
             # Update the board
             self.game.print_state()
+
+            # Next player
+            if np.sum(self.game.board.state[self.game.board._CAPTURE_LAYER]) == 0:
+                self.cur_player = (self.cur_player + 1) % 2
         
         return self.game.get_game_ended()
 
@@ -201,7 +211,7 @@ class HumanPlay(object):
         self.ai.reset()
 
         # Determine who plays first
-        first = input("Who plays first? ['h' = human, 'a' = ai, 'r' = random]")
+        first = raw_input("Who plays first? ['h' = human, 'a' = ai, 'r' = random]\n> ")
         if first == 'a':
             self.player = ['AI', 'Human']
         elif first == 'r':

@@ -281,6 +281,6 @@ class ZertzGame():
                 + self.board.state[3] * 3)
         print "---------------"
         print "Marble supply:"
-        print self.board[-10:-1, 0, 0]
+        print self.board.state[-10:-1, 0, 0]
         print "---------------"
 

@@ -97,8 +97,13 @@ class MCTS(object):
         self.root = Node(None, 1.0, 1)
 
     def move_root(self, action):
-        self.root = self.root.child[action]
-        self.root.parent = None
+        # Move the root to the child node corresponding to the action.
+        # If the action wasn't expanded then reset the tree.
+        if action in self.root.child:
+            self.root = self.root.child[action]
+            self.root.parent = None
+        else:
+            self.reset()
 
     def simulate(self, board_state):
         """
@@ -115,6 +120,8 @@ class MCTS(object):
             if node.is_leaf():
                 break
             action_type, best_a, node = node.get_action(self.c_puct)
+            #print(np.sum(board_state[:4], axis=0))
+            #print(action_type)
             next_board_state, _ = self.game.get_next_state(best_a, action_type, board_state)
             player_change = 1 if next_board_state[-1, 0, 0] == board_state[-1, 0, 0] else -1
             board_state = next_board_state
