@@ -233,6 +233,13 @@ class TestZertzLogic(unittest.TestCase):
                 symmetry_capture = board.mirror_action('CAP', symmetry_capture)
             self.assertTrue(np.all(valid_capture == symmetry_capture))
 
+    def test_str_to_index(self):
+        board = Board(37)
+        indices = [(3, 0), (1, 1), (4, 2), (4, 3), (3, 6), (0, 6)]
+        moves = ['A1', 'B4', 'C2', 'D3', 'G1', 'G4']
+        for index, move in zip(indices, moves):
+            self.assertEqual(index, board.str_to_index(move))
+
 class TestZertzGame(unittest.TestCase):
     def test_init(self):
         game = ZertzGame(19)
