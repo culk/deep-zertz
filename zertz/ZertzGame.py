@@ -196,7 +196,7 @@ class ZertzGame():
         return translated
 
     def str_to_action(self, action_str):
-        # Translate action [i.e. 'PUT w A1 B2' or 'CAP b C4 g C2']
+        # Translate an action string [i.e. 'PUT w A1 B2' or 'CAP b C4 g C2'] to a tuple/type
         args = action_str.split()
         action_type = args[0]
         if action_type == 'PUT':
@@ -232,6 +232,7 @@ class ZertzGame():
         return action_type, action
 
     def action_to_str(self, action_type, action):
+        # Translate an action tuple and type to a human readable string representation
         action_str = action_type + ' '
         if action_type == 'PUT':
             marble_type, put, rem = action
@@ -268,6 +269,18 @@ class ZertzGame():
         return action_str
 
     def print_state(self):
-        # TODO: 
-        pass
+        # Print the board state and supplies to the console
+        #   0 - empty space
+        #   1 - ring
+        #   2 - white marble
+        #   3 - gray marble
+        #   4 - black marble
+        print "---------------"
+        print "Board state:"
+        print (self.board.state[0] + self.board.state[1] + self.board.state[2] * 2
+                + self.board.state[3] * 3)
+        print "---------------"
+        print "Marble supply:"
+        print self.board[-10:-1, 0, 0]
+        print "---------------"
 
