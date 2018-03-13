@@ -34,6 +34,12 @@ class SelfPlay(object):
             # sum(probs) = 1.0000000029 raised an error in random choice: probabilities do not sum to 1
             probs /= sum(probs)
             action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
+            # TODO: (debugging) it could be wrong to move the root during this function instead
+            #       of reseting the tree because of different player turns.
+            #       If the current player changes when the root moves then we should be minimizing
+            #       the Q values.
+            #       Potential solution is to maintain two MCTS and move both roots at every action.
+            #       Although, reseting the root node should come with updating the current player as well. Simply reseting the node right now sets the cur_player for root to 1. Then, if the game value encountered is -1, but cur_player is -1 then the Q values will be updated incorrectly.
             self.mcts.move_root(action)
 
             board_state, player_value = self.game.get_next_state(action, action_type)
@@ -116,7 +122,7 @@ class Arena(object):
             # Choose the action greedily
             action = actions[np.argmax(probs)]
             if logging:
-                print(np.sum(state[:2] + state[2], axis=0))
+                print(state[0] + state[1] + state[2]*2 + state[3]*3)
                 print(player_value, action_type, action)
             self.game.get_next_state(action, action_type)
 
@@ -127,7 +133,7 @@ class Arena(object):
         # Player1 is new model
         for t in xrange(num_games/2):
             if t == 0:
-                winner = self.match(logging=False)
+                winner = self.match(logging=True)
             else:
                 winner = self.match()
             if winner == 1:
@@ -139,8 +145,11 @@ class Arena(object):
 
         # Switch who goes first, player2 is new model
         self.player1, self.player2 = self.player2, self.player1
-        for _ in xrange(num_games/2):
-            winner = self.match()
+        for t in xrange(num_games/2):
+            if t == 0:
+                winner = self.match(logging=True)
+            else:
+                winner = self.match()
             if winner == 1:
                 player2_win += 1
             elif winner == -1:
@@ -159,6 +168,7 @@ class HumanPlay(object):
         self.ai = ai_agent
         self.player = ['Human', 'AI']
         self.cur_player = 0
+        self.first_ai_turn = True
 
     def match(self):
         """
@@ -169,6 +179,10 @@ class HumanPlay(object):
         while self.game.get_game_ended() == 0:
             # Get current player's action
             if self.player[self.cur_player] == 'AI':
+                if self.first_ai_turn:
+                    player_value = 1 if self.cur_player == 0 else -1
+                    self.ai.reset(player_value)
+                    self.first_ai_turn = False
                 state, _ = self.game.get_current_state()
                 action_type, actions, probs = self.ai.get_action_prob(state, temp=0)
                 action = actions[np.argmax(probs)]
@@ -208,7 +222,7 @@ class HumanPlay(object):
     def play(self):
         # Reset the board and ai state
         self.game.reset_board()
-        self.ai.reset()
+        self.first_ai_turn = True
 
         # Determine who plays first
         first = raw_input("Who plays first? ['h' = human, 'a' = ai, 'r' = random]\n> ")

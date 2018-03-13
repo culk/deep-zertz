@@ -51,6 +51,9 @@ class Node(object):
         self.action_type = action_type
         for action in zip(*np.where(predicted_p > 0)):
             prob = predicted_p[action]
+            # TODO: (bug) the player_change is for the previous action step. We really need the
+            #       player_change from the child action. You don't know the value of the child
+            #       node until you have taken the action, so update this in simulate.
             self.child[action] = Node(self, prob, player_change*self.cur_player)
 
     def get_action(self, c_puct):
@@ -93,8 +96,8 @@ class MCTS(object):
         self.num_sim = num_sim
         self.root = Node(None, 1.0, 1)
 
-    def reset(self):
-        self.root = Node(None, 1.0, 1)
+    def reset(self, cur_player=1):
+        self.root = Node(None, 1.0, cur_player)
 
     def move_root(self, action):
         # Move the root to the child node corresponding to the action.
@@ -124,8 +127,10 @@ class MCTS(object):
             #print(action_type)
             next_board_state, _ = self.game.get_next_state(best_a, action_type, board_state)
             player_change = 1 if next_board_state[-1, 0, 0] == board_state[-1, 0, 0] else -1
+            # TODO: update node cur_player based on the action
             board_state = next_board_state
         
+        # TODO: remove the below code because action_filter isn't needed to predict anymore
         # Get which type of action is valid from the leaf node board state
         valid_placement, valid_capture = self.game.get_valid_actions(board_state)
         if np.any(valid_placement == True):
@@ -137,6 +142,7 @@ class MCTS(object):
         # TODO: (feature add) transform the board state to a random symmetry before predicting
         #       the policies and v. This helps avoid bias in MCTS. How to translate the 
         #       policy distribution back from the symmetrical board state?
+        # TODO: move the below line into the if statement to only predict if the game isn't over
         p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
         # TODO: (feature add) split the policy into placement and capture and reshape them
 
@@ -148,13 +154,6 @@ class MCTS(object):
             p_placement = np.squeeze(p_placement)
             p_capture = np.squeeze(p_capture)
             v = np.squeeze(v)
-
-            # TODO: (debugging) debug custom loss
-            if np.any(np.isnan(p_placement)):
-                import pdb; pdb.set_trace()
-            if np.any(np.isnan(p_capture)):
-                import pdb; pdb.set_trace()
-            # end debug for custom_loss
 
             if np.any(valid_placement == True):
                 p_placement = np.multiply(p_placement, valid_placement)
@@ -174,7 +173,8 @@ class MCTS(object):
             v = game_value
 
         # Use the true or predicted value of the game to update the nodes
-        node.recurse_update(-v)
+        #node.recurse_update(-v)
+        node.recurse_update(v * player_change)
 
     def get_action_prob(self, state, temp):
         # Return the actions and corresponding probabilities for the current state.
@@ -190,6 +190,13 @@ class MCTS(object):
 
         if temp == 0:
             # Exploitation, recommend the action that has the highest visit count
+            # TODO: (debugging) actions seem to be clustered to only a few
+            explored = list(np.where(np.array(visits) > 0)[0])
+            print(explored)
+            for a in explored:
+                n = self.root.child[actions[a]]
+                print(actions[a], n.P, n.N, n.Q)
+            # end debug code
             probs = np.zeros(len(visits), dtype=np.float32)
             probs[np.argmax(visits)] = 1.0
             actions, probs = self.restore_action_matrix(actions, probs)
@@ -198,7 +205,6 @@ class MCTS(object):
             probs = np.array(visits, dtype=np.float32)**(1. / temp)
             actions, probs = self.restore_action_matrix(actions, probs)
 
-        #probs /= np.sum(probs)
         return action_type, actions, probs
 
     def restore_action_matrix(self, actions, probs):
@@ -211,7 +217,6 @@ class MCTS(object):
 
         for index, p in zip(actions, probs):
             probs_full[index] = p
-
 
         z, y, x = probs_full.shape
         actions_full = [(i, j, k) for i in xrange(z) for j in xrange(y) for k in xrange(x)]
