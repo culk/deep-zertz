@@ -5,32 +5,49 @@ class Config(object):
     information parameters. Model objects are passed a Config() object at
     instantiation.
     """
-    models = ['linear', 'dense', 'conv']
-
-    hidden_size = 10
-    # TODO: (feature add) scale the learning rate over time?
-    lr = 0.01
-
+    # Training settings
+    num_iters = 30
     batch_size = 100
     epochs = 50
+    lr = 0.01
 
-    num_layers = 5
-    num_filters = 16
-    kernel_size = 3
-    dropout = 0.1
-
+    # Neural network settings
+    models = ['linear', 'dense', 'conv']
     model = models[2]
     checkpoint_folder = 'checkpoints'
-    arena_games = 40
-    arena_threshold = 0.55
-    # Should be set in a way that encourages exploration in early moves and then 
-    # selects optimal moves later in the game
-    temp_threshold = 6
-    num_iters = 30
+    num_layers = 10
+    hidden_size = 64 # linear and dense only
+    num_filters = 64 # conv only
+    kernel_size = 3 # conv only
+    dropout = 0.1 # conv only
+    regularizer = 0.0001 # resnet only
+    num_residual_blocks = 3 # resnet only
 
-    num_episodes = 100
+    # MCTS settings
+    num_episodes = 25
+    num_sims = 10
     c_puct = 1
-    num_sims = 25
+    # Should be set based on game length to encourage exploration in early moves
+    temp_threshold = 6
 
-    regularizer = 0.0001
-    num_residual_blocks = 3
+    # Unused:
+    #arena_games = 40
+    #arena_threshold = 0.55
+
+# For AI vs AI play
+class Config1(Config):
+    model = Config.models[2]
+    checkpoint_folder = 'checkpoints_old'
+
+    num_layers = 10 # both
+    num_filters = 64 # conv only
+    hidden_size = 64 # linear and dense only
+
+class Config2(Config):
+    model = Config.models[2]
+    checkpoint_folder = 'checkpoints_old'
+
+    num_layers = 15 # both
+    num_filters = 16 # conv only
+    hidden_size = 64 # linear and dense only
+
