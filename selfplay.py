@@ -207,14 +207,14 @@ class HumanPlay(object):
                     print "Invalid action: {}".format(action_str)
 
             # Apply the action
-            self.game.get_next_state(action, action_type)
-            self.ai.move_root(action)
+            board_state, player_value = self.game.get_next_state(action, action_type)
+            self.ai.move_root(action, player_value)
 
             # Update the board
             self.game.print_state()
 
             # Next player
-            if np.sum(self.game.board.state[self.game.board._CAPTURE_LAYER]) == 0:
+            if np.sum(board_state[self.game.board._CAPTURE_LAYER]) == 0:
                 self.cur_player = (self.cur_player + 1) % 2
         
         return self.game.get_game_ended()
