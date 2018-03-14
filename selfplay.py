@@ -163,11 +163,10 @@ class HumanPlay(object):
         while self.game.get_game_ended() == 0:
             # Get current player's action
             if self.player[self.cur_player] == 'AI':
+                state, player_value = self.game.get_current_state()
                 if self.first_ai_turn:
-                    player_value = 1 if self.cur_player == 0 else -1
                     self.ai.reset(player_value)
                     self.first_ai_turn = False
-                state, _ = self.game.get_current_state()
                 action_type, actions, probs = self.ai.get_action_prob(state, temp=0)
                 action = actions[np.argmax(probs)]
                 action_log = self.game.action_to_str(action_type, action)

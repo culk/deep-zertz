@@ -93,7 +93,7 @@ class MCTS(object):
     def move_root(self, action, cur_player):
         # Move the root to the child node corresponding to the action.
         # Requires cur_player in case the action isn't already a child.
-        if action in self.root.child:
+        if action in self.root.child and self.root.child[action].cur_player != 0:
             self.root = self.root.child[action]
             self.root.parent = None
         else:
@@ -108,7 +108,6 @@ class MCTS(object):
             board_state is a 3-D array representing game state
         """
         node = self.root
-        #print('root', node.cur_player)
 
         while True:
             if node.is_leaf():
@@ -124,7 +123,6 @@ class MCTS(object):
 
         if game_value == 0:
             # No player has won, predict the policy distribution and state value to add nodes
-
             # TODO: remove the below code because action_filter isn't needed to predict anymore
             # Get which type of action is valid from the leaf node board state
             valid_placement, valid_capture = self.game.get_valid_actions(board_state)
@@ -133,19 +131,25 @@ class MCTS(object):
             else:
                 action_filter = 0
 
-            # Predict the action probabilities using the nnet, filtering for the action type
-            # TODO: (feature add) transform the board state to a random symmetry before predicting
-            #       the policies and v. This helps avoid bias in MCTS. How to translate the 
-            #       policy distribution back from the symmetrical board state?
-            # TODO: move the below line into the if statement to only predict if the game isn't over
-            p_placement, p_capture, v = self.nnet.predict(board_state, action_filter)
-            # TODO: (feature add) split the policy into placement and capture and reshape them
+            # Get a symmetrical board_state and call predict to get the policy and value
+            symmetries = self.game.get_symmetries(board_state)
+            selected_symmetry = symmetries[np.random.choice(np.arange(len(symmetries)))]
+            symmetry_id, symmetrical_state = selected_symmetry
 
+            # TODO: (feature add) split the policy into placement and capture and reshape them
+            p_placement, p_capture, v = self.nnet.predict(symmetrical_state, action_filter)
             p_placement = np.squeeze(p_placement)
             p_capture = np.squeeze(p_capture)
             v = np.squeeze(v)
 
-            if np.any(valid_placement == True):
+            # Translate the actions back for the current board_state
+            p_placement = self.game.translate_action_symmetry('PUT', symmetry_id, p_placement)
+            p_capture = self.game.translate_action_symmetry('CAP', symmetry_id, p_capture)
+            # For planned changes to opponent symmetry generation
+            if symmetry_id > 3:
+                v = -v
+
+            if np.any(valid_placement):
                 p_placement = np.multiply(p_placement, valid_placement)
                 if np.sum(p_placement) == 0:
                     p_placement = valid_placement.astype(np.float32)
