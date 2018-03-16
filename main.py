@@ -22,7 +22,7 @@ if __name__ == '__main__':
     trainer.learn()
 
     # Option #2: Human vs AI
-    #nnet.load_checkpoint(filename='checkpoint_64_10_29.pth.tar')
+    #nnet.load_checkpoint(filename='checkpoint_32_10_0001_29.pth.tar')
     #ai_agent = MCTS(game, nnet, config.c_puct, config.num_sims)
     #hp = HumanPlay(game, ai_agent)
     #hp.play()

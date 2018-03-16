@@ -188,7 +188,7 @@ class MCTS(object):
             #print(explored)
             #for a in explored:
                 #n = self.root.child[actions[a]]
-                #print(actions[a], n.P, n.N, n.Q)
+                #print(actions[a], self.root.cur_player, n.P, n.N, n.Q)
             # end debug code
             probs = np.zeros(len(visits), dtype=np.float32)
             probs[np.argmax(visits)] = 1.0
