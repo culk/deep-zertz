@@ -22,7 +22,7 @@ class Config(object):
     num_filters = 32 # conv only
     kernel_size = 3 # conv only
     dropout = 0.1 # conv only
-    regularizer = 0.0001 # resnet only
+    regularizer = 0.0001
     num_residual_blocks = 3 # resnet only
 
     # MCTS settings

@@ -129,7 +129,8 @@ class ConvModel(object):
             hidden = Activation('relu')(BatchNormalization(axis=1)(Conv2D(self.config.num_filters,
                                                                     self.config.kernel_size,
                                                                     padding='same',
-                                                                    data_format='channels_first')(hidden)))
+                                                                    data_format='channels_first',
+                                                                    kernel_regularizer=l2(self.config.regularizer))(hidden)))
         hidden = Flatten()(hidden)
         hidden = Dropout(self.config.dropout)(Activation('relu')(BatchNormalization(axis=1)(Dense(1024)(hidden))))
         hidden = Dropout(self.config.dropout)(Activation('relu')(BatchNormalization(axis=1)(Dense(512)(hidden))))

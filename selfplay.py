@@ -12,7 +12,6 @@ class SelfPlay(object):
         self.mcts = MCTS(self.game, self.nnet, Config.c_puct, Config.num_sims)
         self.temp_threshold = Config.temp_threshold
         self.use_dirichlet = Config.use_dirichlet
-        self.dir_alpha = Config.dir_alpha
 
     def generate_play_data(self):
         examples = []
@@ -33,11 +32,14 @@ class SelfPlay(object):
             probs /= sum(probs)
             if self.use_dirichlet:
                 valid_placement, valid_capture = self.game.get_valid_actions(board_state)
-                dirichlet_probs = np.random.dirichlet(self.dir_alpha*np.ones(len(probs)))
                 if action_type == 'PUT':
+                    dir_alpha = 1.0/np.sum(valid_placement)
+                    dirichlet_probs = np.random.dirichlet(dir_alpha*np.ones(len(probs)))
                     valid_placement = valid_placement.flatten()
                     dirichlet_probs *= valid_placement
                 else:
+                    dir_alpha = 1.0/np.sum(valid_capture)
+                    dirichlet_probs = np.random.dirichlet(dir_alpha*np.ones(len(probs)))
                     valid_capture = valid_capture.flatten()
                     dirichlet_probs *= valid_capture
                 dirichlet_probs /= np.sum(dirichlet_probs)
