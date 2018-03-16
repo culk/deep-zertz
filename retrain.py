@@ -71,6 +71,7 @@ class Individual(Coach):
         self.game = game
         self.model = model
         self.config = config
+        self.example_buffer = deque(maxlen=self.config.buffer_size)
 
     def learn(self):
         for i in range(self.config.num_iters):
@@ -82,8 +83,9 @@ class Individual(Coach):
                 examples += self_play.generate_play_data()
             examples = self.examples_to_array(examples)
             examples = self.shuffle_examples(examples)
+            self.example_buffer.extend(examples)
 
             # Step 2. Train the model
-            self.model.train(examples, i)
+            self.model.train(self.example_buffer, i)
             self.model.save_checkpoint(filename=self.getCheckpointFile(i))
 

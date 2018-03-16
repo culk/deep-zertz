@@ -7,7 +7,9 @@ class Config(object):
     """
     # Training settings
     num_iters = 30
-    batch_size = 100
+    batch_size = 1000
+    # maintains past 2.5 games worth of turns if num_episodes=500
+    buffer_size = 100000
     epochs = 50
     lr = 0.01
 
@@ -17,7 +19,7 @@ class Config(object):
     checkpoint_folder = 'checkpoints'
     num_layers = 10
     hidden_size = 64 # linear and dense only
-    num_filters = 64 # conv only
+    num_filters = 32 # conv only
     kernel_size = 3 # conv only
     dropout = 0.1 # conv only
     regularizer = 0.0001 # resnet only
