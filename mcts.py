@@ -183,6 +183,13 @@ class MCTS(object):
 
         if temp == 0:
             # Exploitation, recommend the action that has the highest visit count
+            # TODO: (debugging) actions seem to be clustered to only a few
+            #explored = list(np.where(np.array(visits) > 0)[0])
+            #print(explored)
+            #for a in explored:
+                #n = self.root.child[actions[a]]
+                #print(actions[a], n.P, n.N, n.Q)
+            # end debug code
             probs = np.zeros(len(visits), dtype=np.float32)
             probs[np.argmax(visits)] = 1.0
             actions, probs = self.restore_action_matrix(actions, probs)

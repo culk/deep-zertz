@@ -1,9 +1,12 @@
 '''
 This script optimizes the neural network via retraining
 '''
+from collections import deque
+import random
+import numpy as np
+
 from mcts import MCTS
 from selfplay import SelfPlay, Arena
-import numpy as np
 
 class Coach(object):
     def __init__(self, game, model, config):
@@ -78,14 +81,14 @@ class Individual(Coach):
             print 'Staring the %i th iteration...' %i
             # Step 1. Generate training examples by self play with current model
             self_play = SelfPlay(self.game, self.model)
-            examples = []
+            new_examples = []
             for _ in range(self.config.num_episodes):
-                examples += self_play.generate_play_data()
-            examples = self.examples_to_array(examples)
-            examples = self.shuffle_examples(examples)
-            self.example_buffer.extend(examples)
+                new_examples += self_play.generate_play_data()
+            random.shuffle(new_examples)
+            self.example_buffer.extend(new_examples)
+            training_examples = self.examples_to_array(self.example_buffer)
 
             # Step 2. Train the model
-            self.model.train(self.example_buffer, i)
+            self.model.train(training_examples, i)
             self.model.save_checkpoint(filename=self.getCheckpointFile(i))
 
