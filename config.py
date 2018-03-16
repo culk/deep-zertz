@@ -8,8 +8,10 @@ class Config(object):
     # Training settings
     num_iters = 30
     batch_size = 1000
-    # maintains past 2.5 games worth of turns if num_episodes=500
-    buffer_size = 100000
+    # maintains past 2.5 games worth of turns if num_episodes=500 and rings=19
+    # maintains past 1 game worth of turns if num_episodes=500 and rings=37
+    # buffer_size = 100000
+    buffer_size = 5000
     epochs = 50
     lr = 0.01
 
@@ -26,14 +28,15 @@ class Config(object):
     num_residual_blocks = 3 # resnet only
 
     # MCTS settings
+    # 100 sims and 1000 episodes ~ 37 seconds per episode / 13 days for 30 iters
+    # 25 sims and 500 episodes ~ 9 seconds per episode / 1.5 days for 30 iters
     num_episodes = 25
     num_sims = 10
     c_puct = 1
     # Should be set based on game length to encourage exploration in early moves
     temp_threshold = 6
-
     use_dirichlet = True
-    dir_alpha = 0.05263
+    #dir_alpha = 0.05263
 
     # Unused:
     #arena_games = 40
