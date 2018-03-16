@@ -23,17 +23,13 @@ class SelfPlay(object):
         board_state, player_value = self.game.get_current_state()
 
         while True:
+            # Generate example and add it to the queue
             episode_step += 1
-            #self.mcts.reset()
-
-            # Set tempurature to 1 if current turn is less than the threshold
-            # TODO: (debugging) Check if temp should be higher for ealier turns and then scale down
-            temp = int(episode_step < self.temp_threshold)
-
+            temp = max(self.temp_threshold - episode_step, 0)
             action_type, actions, probs = self.mcts.get_action_prob(board_state, temp=temp)
             examples.append([board_state, action_type, probs, player_value])
 
-            # sum(probs) = 1.0000000029 raised an error in random choice: probabilities do not sum to 1
+            # Select an action at random and update the game and MC search tree
             probs /= sum(probs)
             if self.use_dirichlet:
                 valid_placement, valid_capture = self.game.get_valid_actions(board_state)
@@ -48,16 +44,9 @@ class SelfPlay(object):
                 action = actions[np.random.choice(np.arange(len(actions)), p=0.75*probs + 0.25*dirichlet_probs)]
             else:
                 action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
-            # TODO: (debugging) it could be wrong to move the root during this function instead
-            #       of reseting the tree because of different player turns.
-            #       If the current player changes when the root moves then we should be minimizing
-            #       the Q values.
-            #       Potential solution is to maintain two MCTS and move both roots at every action.
-            #       Although, reseting the root node should come with updating the current player as well. Simply reseting the node right now sets the cur_player for root to 1. Then, if the game value encountered is -1, but cur_player is -1 then the Q values will be updated incorrectly.
-            self.mcts.move_root(action)
 
             board_state, player_value = self.game.get_next_state(action, action_type)
-
+            self.mcts.move_root(action, player_value)
             winner = self.game.get_game_ended(board_state)
 
             if winner != 0 or episode_step > 200:
@@ -76,8 +65,6 @@ class SelfPlay(object):
                         p_placement = null_put_pi
                         p_capture = e[2]
                         action_type = 0
-                    #print(p_placement.shape)
-                    #print(p_capture.shape)
                     new_examples.append((state, p_placement, p_capture, v, action_type))
 
                     # Add opponent symmetry
@@ -97,9 +84,8 @@ class SelfPlay(object):
                             p_capture = self.game.translate_action_symmetry(
                                     e[1], symmetry_type, e[2]).flatten()
                             action_type = 0
-                        #print(p_placement.shape)
-                        #print(p_capture.shape)
                         new_examples.append((state, p_placement, p_capture, v, action_type))
+
                         opponent_state = np.copy(state)
                         opponent_state[-1] = (opponent_state[-1] - 1) * -1
                         new_examples.append((opponent_state, p_placement, p_capture, -v, action_type))
@@ -193,11 +179,10 @@ class HumanPlay(object):
         while self.game.get_game_ended() == 0:
             # Get current player's action
             if self.player[self.cur_player] == 'AI':
+                state, player_value = self.game.get_current_state()
                 if self.first_ai_turn:
-                    player_value = 1 if self.cur_player == 0 else -1
                     self.ai.reset(player_value)
                     self.first_ai_turn = False
-                state, _ = self.game.get_current_state()
                 action_type, actions, probs = self.ai.get_action_prob(state, temp=0)
                 action = actions[np.argmax(probs)]
                 action_log = self.game.action_to_str(action_type, action)
@@ -221,14 +206,14 @@ class HumanPlay(object):
                     print "Invalid action: {}".format(action_str)
 
             # Apply the action
-            self.game.get_next_state(action, action_type)
-            self.ai.move_root(action)
+            board_state, player_value = self.game.get_next_state(action, action_type)
+            self.ai.move_root(action, player_value)
 
             # Update the board
             self.game.print_state()
 
             # Next player
-            if np.sum(self.game.board.state[self.game.board._CAPTURE_LAYER]) == 0:
+            if np.sum(board_state[self.game.board._CAPTURE_LAYER]) == 0:
                 self.cur_player = (self.cur_player + 1) % 2
         
         return self.game.get_game_ended()
