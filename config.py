@@ -30,6 +30,9 @@ class Config(object):
     # Should be set based on game length to encourage exploration in early moves
     temp_threshold = 6
 
+    use_dirichlet = True
+    dir_alpha = 0.05263
+
     # Unused:
     #arena_games = 40
     #arena_threshold = 0.55

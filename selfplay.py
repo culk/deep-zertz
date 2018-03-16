@@ -11,6 +11,8 @@ class SelfPlay(object):
         self.nnet = nnet
         self.mcts = MCTS(self.game, self.nnet, Config.c_puct, Config.num_sims)
         self.temp_threshold = Config.temp_threshold
+        self.use_dirichlet = Config.use_dirichlet
+        self.dir_alpha = Config.dir_alpha
 
     def generate_play_data(self):
         examples = []
@@ -33,7 +35,19 @@ class SelfPlay(object):
 
             # sum(probs) = 1.0000000029 raised an error in random choice: probabilities do not sum to 1
             probs /= sum(probs)
-            action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
+            if self.use_dirichlet:
+                valid_placement, valid_capture = self.game.get_valid_actions(board_state)
+                dirichlet_probs = np.random.dirichlet(self.dir_alpha*np.ones(len(probs)))
+                if action_type == 'PUT':
+                    valid_placement = valid_placement.flatten()
+                    dirichlet_probs *= valid_placement
+                else:
+                    valid_capture = valid_capture.flatten()
+                    dirichlet_probs *= valid_capture
+                dirichlet_probs /= np.sum(dirichlet_probs)
+                action = actions[np.random.choice(np.arange(len(actions)), p=0.75*probs + 0.25*dirichlet_probs)]
+            else:
+                action = actions[np.random.choice(np.arange(len(actions)), p=probs)]
             # TODO: (debugging) it could be wrong to move the root during this function instead
             #       of reseting the tree because of different player turns.
             #       If the current player changes when the root moves then we should be minimizing
