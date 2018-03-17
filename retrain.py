@@ -83,12 +83,12 @@ class Individual(Coach):
             # Step 1. Generate training examples by self play with current model
             self_play = SelfPlay(self.game, self.model)
             new_examples = []
-            for i in range(self.config.num_episodes):
+            for j in range(self.config.num_episodes):
                 start = time.time()
                 new_examples += self_play.generate_play_data()
                 now = time.time() - start
 
-                if i % 100 == 0:
+                if j % 100 == 0:
                     print 'Time to generate an episode = %i s' %now
 
             random.shuffle(new_examples)
