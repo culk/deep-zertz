@@ -108,25 +108,33 @@ class Arena(object):
         Returns 1 if player1 won, -1 if player2 won.
         """
         self.game.reset_board()
+        self.player1.reset(1)
+        self.player2.reset(-1)
+        #self.game.print_state()
 
         while self.game.get_game_ended() == 0:
-            # Reset the MCTS to start at the new board state
-            self.player1.reset()
-            self.player2.reset()
             state, player_value = self.game.get_current_state()
 
             # Obtain the policy from the player's agent
             if player_value == 1: # if cur_player is player1
-                action_type, actions, probs = self.player1.get_action_prob(state, temp=1)
+                action_type, actions, probs = self.player1.get_action_prob(state, temp=0)
             else: # plaver_value == -1 and cur_player is player2
-                action_type, actions, probs = self.player2.get_action_prob(state, temp=1)
+                action_type, actions, probs = self.player2.get_action_prob(state, temp=0)
 
             # Choose the action greedily
             action = actions[np.argmax(probs)]
             if logging:
-                print(state[0] + state[1] + state[2]*2 + state[3]*3)
-                print(player_value, action_type, action)
-            self.game.get_next_state(action, action_type)
+                #print(state[0] + state[1] + state[2]*2 + state[3]*3)
+                action_log = self.game.action_to_str(action_type, action)
+                # Print the action taken
+                print "{}:\t {}".format(player_value, action_log)
+                #print(player_value, action_type, action)
+            board_state, player_value = self.game.get_next_state(action, action_type)
+            self.player1.move_root(action, player_value)
+            self.player2.move_root(action, -player_value)
+
+            # Update the board
+            #self.game.print_state()
 
         return self.game.get_game_ended()
 
@@ -134,10 +142,11 @@ class Arena(object):
         player1_win, player2_win, draw = 0, 0, 0
         # Player1 is new model
         for t in xrange(num_games/2):
-            if t == 0:
-                winner = self.match(logging=True)
-            else:
-                winner = self.match()
+            #if t == 0:
+                #winner = self.match(logging=True)
+            #else:
+            print "\nFirst player: AI 1"
+            winner = self.match(logging=True)
             if winner == 1:
                 player1_win += 1
             elif winner == -1:
@@ -148,10 +157,11 @@ class Arena(object):
         # Switch who goes first, player2 is new model
         self.player1, self.player2 = self.player2, self.player1
         for t in xrange(num_games/2):
-            if t == 0:
-                winner = self.match(logging=True)
-            else:
-                winner = self.match()
+            #if t == 0:
+                #winner = self.match(logging=True)
+            #else:
+            print "\nFirst player: AI 2"
+            winner = self.match(logging=True)
             if winner == 1:
                 player2_win += 1
             elif winner == -1:

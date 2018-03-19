@@ -205,7 +205,7 @@ class Board():
         # Translate the action dimensions into marble_type, put_index, and rem_index
         type_index, put_loc, rem_loc = action
         marble_type = self._LAYER_TO_MARBLE[type_index + 1]
-        put_index = (put_loc // self.width, put_loc % self.width) 
+        put_index = (put_loc // self.width, put_loc % self.width)
         if rem_loc == self.width**2:
             rem_index = None
         else:
@@ -213,19 +213,18 @@ class Board():
 
         # Place the marble on the board
         y, x = put_index
-        if np.sum(self.state[:4, y, x]) != 1:
-            import pdb; pdb.set_trace()
         assert np.sum(self.state[:4, y, x]) == 1
         put_layer = self._MARBLE_TO_LAYER[marble_type] 
         self.state[put_layer][put_index] = 1
 
         # Remove the marble from the supply
         supply_layer = self._MARBLE_TO_SUPPLY[marble_type]
-        if self.state[supply_layer, 0, 0] > 1:
+        if self.state[supply_layer, 0, 0] >= 1:
             self.state[supply_layer] -= 1
         else:
             # If supply is empty then take the marble from those the player has captured
             supply_layer = self._get_cur_player_supply_layer(marble_type)
+            assert self.state[supply_layer, 0, 0] >= 1
             self.state[supply_layer] -= 1
 
         # Remove the ring from the board
