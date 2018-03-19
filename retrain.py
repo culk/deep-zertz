@@ -7,6 +7,7 @@ import numpy as np
 
 from mcts import MCTS
 from selfplay import SelfPlay, Arena
+import time
 
 class Coach(object):
     def __init__(self, game, model, config):
@@ -82,8 +83,14 @@ class Individual(Coach):
             # Step 1. Generate training examples by self play with current model
             self_play = SelfPlay(self.game, self.model)
             new_examples = []
-            for _ in range(self.config.num_episodes):
+            for j in range(self.config.num_episodes):
+                start = time.time()
                 new_examples += self_play.generate_play_data()
+                now = time.time() - start
+
+                if j % 100 == 0:
+                    print 'Time to generate an episode = %i s' %now
+
             random.shuffle(new_examples)
             self.example_buffer.extend(new_examples)
             training_examples = self.examples_to_array(self.example_buffer)

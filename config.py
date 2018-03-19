@@ -11,7 +11,7 @@ class Config(object):
     # maintains past 2.5 games worth of turns if num_episodes=500 and rings=19
     # maintains past 1 game worth of turns if num_episodes=500 and rings=37
     # buffer_size = 100000
-    buffer_size = 100000
+    buffer_size = 150000
     epochs = 50
     lr = 0.01
 
@@ -30,8 +30,8 @@ class Config(object):
     # MCTS settings
     # 100 sims and 1000 episodes ~ 37 seconds per episode / 13 days for 30 iters
     # 25 sims and 500 episodes ~ 9 seconds per episode / 1.5 days for 30 iters
-    num_episodes = 500
-    num_sims = 25
+    num_episodes = 750
+    num_sims = 40
     c_puct = 1
     # Should be set based on game length to encourage exploration in early moves
     temp_threshold = 6
